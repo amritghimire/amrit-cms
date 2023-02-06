@@ -1,0 +1,2 @@
+[workspace]
+members = ["translations", "frontend_client", "admin_client", "yew_components", "api_server", "auth_service"]
