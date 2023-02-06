@@ -14,3 +14,7 @@ On Linux:
 
 On MacOS, `brew install michaeleisel/zld/zld`
 
+### Development tools
+
+Install cargo watch:
+`cargo install cargo-watch`
