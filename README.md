@@ -18,3 +18,14 @@ On MacOS, `brew install michaeleisel/zld/zld`
 
 Install cargo watch:
 `cargo install cargo-watch`
+
+Install cargo tarpaulin
+`cargo install cargo-tarpaulin`
+
+### Run coverage tests
+`make coverage`
+
+### Add lint component
+`rustup component add clippy`
+`rustup component add rustfmt`
+`cargo install cargo-audit`
