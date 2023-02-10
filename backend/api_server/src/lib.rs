@@ -1,15 +1,16 @@
 use std::net::SocketAddr;
+use axum::Router;
+use axum::routing::IntoMakeService;
+use hyper::Server;
+use hyper::server::conn::AddrIncoming;
 
 mod handlers;
 pub mod routes;
 
-pub async fn run(addr: SocketAddr) {
-    let app = routes::create_router();
+pub fn run(app: Router, addr: SocketAddr) -> Server<AddrIncoming, IntoMakeService<Router>> {
 
-    println!("Starting server in http://0.0.0.0:3000/ ");
+    println!("Starting server in {}", addr);
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
-        .await
-        .unwrap();
 }
