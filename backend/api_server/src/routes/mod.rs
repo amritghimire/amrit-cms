@@ -8,6 +8,10 @@ pub fn base_routes() -> Router {
 
 pub fn create_router() -> Router {
     Router::new()
-        .fallback(handlers::not_found)
         .merge(base_routes())
+        .nest(
+            "/subscriptions",
+            subscription_service::router::create_router(),
+        )
+        .fallback(handlers::not_found)
 }

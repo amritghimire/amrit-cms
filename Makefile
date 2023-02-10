@@ -30,5 +30,9 @@ check_fmt:
 audit:
 	cargo audit
 
+.PHONY: test
+test:
+	cargo test
+
 .PHONY: check_all
-check_all: check clippy check_fmt audit
+check_all: check clippy check_fmt audit test

@@ -1,3 +1,7 @@
 [workspace]
-members = ["translations", "frontend_client", "admin_client", "yew_components", "api_server", "auth_service"]
+members = [
+    "common/translations",
+    "frontend/frontend_client", "frontend/admin_client", "frontend/yew_components",
+    "backend/api_server", "backend/auth_service", "backend/subscription_service", "backend/utils"
+]
 
