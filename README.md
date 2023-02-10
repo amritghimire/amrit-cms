@@ -27,5 +27,10 @@ Install cargo tarpaulin
 
 ### Add lint component
 `rustup component add clippy`
+
 `rustup component add rustfmt`
+
 `cargo install cargo-audit`
+
+### Add SQLX Utilities
+`cargo install sqlx-cli --no-default-features --features postgres,runtime-actix-native-tls`

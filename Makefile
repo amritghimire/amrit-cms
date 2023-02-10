@@ -36,3 +36,7 @@ test:
 
 .PHONY: check_all
 check_all: check clippy check_fmt audit test
+
+.PHONY: init_db
+init_db:
+	./scripts/init_db.sh
