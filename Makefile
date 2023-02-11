@@ -1,3 +1,10 @@
+export DB_USER=${POSTGRES_USER:=postgres}
+export DB_PASSWORD="${POSTGRES_PASSWORD:=password}"
+export DB_NAME="${POSTGRES_DB:=amrit_cms}"
+export DB_PORT="${POSTGRES_PORT:=5432}"
+
+export DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
+
 .PHONY: check
 check:
 	cargo check
@@ -40,3 +47,10 @@ check_all: check clippy check_fmt audit test
 .PHONY: init_db
 init_db:
 	./scripts/init_db.sh
+
+.PHONY: sqlx
+sqlx:
+	sqlx $(filter-out $@,$(MAKECMDGOALS))
+
+%:
+	@:
