@@ -10,6 +10,5 @@ pub mod routes;
 pub fn run(app: Router, addr: SocketAddr) -> Server<AddrIncoming, IntoMakeService<Router>> {
     println!("Starting server in {}", addr);
 
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+    axum::Server::bind(&addr).serve(app.into_make_service())
 }
