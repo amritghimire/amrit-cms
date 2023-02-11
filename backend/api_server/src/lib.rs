@@ -8,7 +8,6 @@ mod handlers;
 pub mod routes;
 
 pub fn run(app: Router, addr: SocketAddr) -> Server<AddrIncoming, IntoMakeService<Router>> {
-
     println!("Starting server in {}", addr);
 
     axum::Server::bind(&addr)
