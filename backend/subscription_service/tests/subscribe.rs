@@ -2,12 +2,19 @@ use axum::body::Body;
 use axum::http;
 use axum::http::{Request, StatusCode};
 use serde_json::json;
+use sqlx::{Connection, PgConnection};
 use subscription_service::router::create_router;
 use tower::util::ServiceExt;
+use utils::configuration::Settings;
 
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
     let app = create_router();
+    let connection_string = Settings::get_config("test").expect("Test config not available").database.connection_string();
+    assert_eq!(connection_string, "");
+    let connection = PgConnection::connect(&connection_string)
+        .await
+        .expect("Failed to connect to Postgres.");
 
     let data = json!({
         "name": "Amrit",
