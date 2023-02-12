@@ -19,11 +19,11 @@ watch:
 
 .PHONY: coverage
 coverage:
-	cargo tarpaulin --ignore-tests
+	DATABASE_URL="$(DATABASE_URL)" cargo tarpaulin --ignore-tests
 
 .PHONY: clippy
 clippy:
-	cargo clippy -- -D warnings
+	DATABASE_URL="$(DATABASE_URL)" cargo clippy -- -D warnings
 
 .PHONY: fmt
 fmt:
