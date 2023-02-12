@@ -7,7 +7,7 @@ use api_server::routes::create_router;
 
 #[tokio::test]
 async fn hello_world() {
-    let app = create_router();
+    let app = create_router().await;
 
     let response = app
         .oneshot(
@@ -30,7 +30,7 @@ async fn hello_world() {
 async fn check_for_server() {
     let listener = TcpListener::bind("0.0.0.0:0".parse::<SocketAddr>().unwrap()).unwrap();
     let addr = listener.local_addr().unwrap();
-    let app = create_router();
+    let app = create_router().await;
 
     tokio::spawn(async move {
         axum::Server::from_tcp(listener)

@@ -6,7 +6,7 @@ use api_server::routes::create_router;
 
 #[tokio::test]
 async fn hello_world() {
-    let app = create_router();
+    let app = create_router().await;
 
     let response = app
         .oneshot(

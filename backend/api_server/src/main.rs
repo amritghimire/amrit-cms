@@ -7,6 +7,6 @@ async fn main() {
     let addr = format!("0.0.0.0:{}", configuration.application_port)
         .parse()
         .unwrap();
-    let app = routes::create_router();
+    let app = routes::create_router().await;
     api_server::run(app, addr).await.unwrap();
 }

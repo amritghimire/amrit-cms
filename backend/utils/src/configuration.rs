@@ -2,13 +2,13 @@ use config::{Config, ConfigError, Environment, File};
 use std::env;
 use std::path::PathBuf;
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Deserialize)]
 pub struct Settings {
     pub database: DatabaseSettings,
     pub application_port: u16,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Deserialize)]
 pub struct DatabaseSettings {
     pub username: String,
     pub password: String,

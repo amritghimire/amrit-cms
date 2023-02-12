@@ -2,15 +2,17 @@ use axum::body::Body;
 use axum::http;
 use axum::http::{Request, StatusCode};
 use serde_json::json;
-use sqlx::{Connection, PgConnection, PgPool};
+use sqlx::{PgPool};
 use subscription_service::router::create_router;
 use tower::util::ServiceExt;
-use utils::configuration::Settings;
+use utils::state::AppState;
 
 #[sqlx::test]
 async fn subscribe_returns_a_200_for_valid_form_data(pool: PgPool) {
-    let app = create_router();
     let mut conn = pool.acquire().await.expect("Unable to acquire connection");
+    let state = AppState::test_state(pool);
+    let app = create_router().with_state(state);
+
 
     let data = json!({
         "name": "Amrit",
@@ -44,9 +46,10 @@ async fn subscribe_returns_a_200_for_valid_form_data(pool: PgPool) {
     // assert_eq!(body, json!({ "data": [1, 2, 3, 4] }));
 }
 
-#[tokio::test]
-async fn subscribe_returns_a_400_for_invalid_form_data() {
-    let app = create_router();
+#[sqlx::test]
+async fn subscribe_returns_a_400_for_invalid_form_data(pool: PgPool) {
+    let state = AppState::test_state(pool);
+    let app = create_router().with_state(state);
 
     let test_cases = vec![
         (json!({"name": "Amrit"}), "missing the email"),
