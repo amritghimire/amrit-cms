@@ -2,7 +2,6 @@ use crate::extractor::SubscriptionPayload;
 use axum::extract::State;
 use axum::response::IntoResponse;
 use axum::Json;
-use chrono::Utc;
 use serde_json::json;
 use sqlx::PgPool;
 use utils::errors::ErrorPayload;
@@ -21,7 +20,7 @@ pub async fn subscribe(
         Uuid::new_v4(),
         payload.email,
         payload.name,
-        Utc::now()
+        time::OffsetDateTime::now_utc()
     )
     .execute(&pool)
     .await
