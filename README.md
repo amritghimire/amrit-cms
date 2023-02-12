@@ -34,3 +34,9 @@ Install cargo tarpaulin
 
 ### Add SQLX Utilities
 `cargo install sqlx-cli --no-default-features --features postgres,runtime-actix-native-tls`
+
+
+### For local development, add a .env file 
+```
+DATABASE_URL="postgres://postgres:password@localhost:5432/amrit_cms"
+```

@@ -2,19 +2,15 @@ use axum::body::Body;
 use axum::http;
 use axum::http::{Request, StatusCode};
 use serde_json::json;
-use sqlx::{Connection, PgConnection};
+use sqlx::{Connection, PgConnection, PgPool};
 use subscription_service::router::create_router;
 use tower::util::ServiceExt;
 use utils::configuration::Settings;
 
-#[tokio::test]
-async fn subscribe_returns_a_200_for_valid_form_data() {
+#[sqlx::test]
+async fn subscribe_returns_a_200_for_valid_form_data(pool: PgPool) {
     let app = create_router();
-    let connection_string = Settings::get_config("test").expect("Test config not available").database.connection_string();
-    assert_eq!(connection_string, "");
-    let connection = PgConnection::connect(&connection_string)
-        .await
-        .expect("Failed to connect to Postgres.");
+    let mut conn = pool.acquire().await.expect("Unable to acquire connection");
 
     let data = json!({
         "name": "Amrit",
@@ -34,6 +30,14 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
+
+    let saved = sqlx::query!("SELECT email, name FROM subscriptions")
+        .fetch_one(&mut conn)
+        .await
+        .expect("Unable to fetch the table");
+
+    assert_eq!(saved.email, "test@example.com");
+    assert_eq!(saved.name, "Amrit");
     //
     // let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
     // let body: Value = serde_json::from_slice(&body).unwrap();

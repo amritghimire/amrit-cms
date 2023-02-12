@@ -13,3 +13,7 @@ serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.93"
 thiserror = "1.0.38"
 validator = "0.16.0"
+
+[build-dependencies]
+config = "0.13.3"
+serde = { version = "1.0.152", features = ["derive"] }

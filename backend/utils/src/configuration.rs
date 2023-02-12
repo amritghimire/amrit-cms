@@ -1,10 +1,11 @@
 use config::{Config, ConfigError, Environment, File};
 use std::env;
+use std::path::PathBuf;
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Settings {
     pub database: DatabaseSettings,
-    pub application_port: u16
+    pub application_port: u16,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -25,8 +26,6 @@ impl DatabaseSettings {
     }
 }
 
-
-
 impl Settings {
     pub fn new() -> Result<Self, ConfigError> {
         let run_mode = env::var("RUN_MODE").unwrap_or_else(|_| "development".into());
@@ -35,26 +34,24 @@ impl Settings {
     }
 
     pub fn get_config(run_mode: &str) -> Result<Self, ConfigError> {
-        let mut dir = env::current_dir().unwrap();
-        let mut default_config = dir.join("config").join("default.yaml");
-        while !default_config.exists() {
-            dir = dir.parent().unwrap().into();
-            default_config = dir.join("config").join("default.yaml");
-        }
+        let dir = Self::get_root_dir();
 
-        let s = Config::builder()
+        let mut s = Config::builder()
             // Start off by merging in the "default" configuration file
-            .add_source(File::from(dir.join("config/default.yaml")))
-            // Add in the current environment file
-            // Default to 'development' env
-            // Note that this file is _optional_
-            .add_source(
-                File::from(dir.join(format!("config/{}", run_mode)))
-                    .required(false),
-            )
+            .add_source(File::from(dir.join("config/default.yaml")));
+
+        if run_mode == "test" {
             // Add in a local configuration file
             // This file shouldn't be checked in to git
-            .add_source(File::from(dir.join("config/local")).required(false))
+            s = s
+                .add_source(File::from(dir.join("config/local")).required(false))
+                .add_source(File::from(dir.join(format!("config/{}", run_mode))).required(false))
+        } else {
+            s = s
+                .add_source(File::from(dir.join(format!("config/{}", run_mode))).required(false))
+                .add_source(File::from(dir.join("config/local")).required(false))
+        }
+        let s = s
             // Add in settings from the environment (with a prefix of APP)
             // Eg.. `APP_DEBUG=1 ./target/app` would set the `debug` key
             .add_source(Environment::with_prefix("app"))
@@ -62,5 +59,15 @@ impl Settings {
             .build()?;
         // You can deserialize (and thus freeze) the entire configuration as
         s.try_deserialize()
+    }
+
+    fn get_root_dir() -> PathBuf {
+        let mut dir = env::current_dir().unwrap();
+        let mut default_config = dir.join("config").join("default.yaml");
+        while !default_config.exists() {
+            dir = dir.parent().unwrap().into();
+            default_config = dir.join("config").join("default.yaml");
+        }
+        dir
     }
 }

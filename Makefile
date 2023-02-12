@@ -1,9 +1,9 @@
-export DB_USER=${POSTGRES_USER:=postgres}
-export DB_PASSWORD="${POSTGRES_PASSWORD:=password}"
-export DB_NAME="${POSTGRES_DB:=amrit_cms}"
-export DB_PORT="${POSTGRES_PORT:=5432}"
+DB_USER ?= postgres
+DB_PASSWORD ?= password
+DB_NAME ?=amrit_cms
+DB_PORT ?= 5432
 
-export DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
+DATABASE_URL:=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
 
 .PHONY: check
 check:
@@ -39,7 +39,7 @@ audit:
 
 .PHONY: test
 test:
-	cargo test
+	DATABASE_URL="$(DATABASE_URL)" cargo test
 
 .PHONY: check_all
 check_all: check clippy check_fmt audit test
