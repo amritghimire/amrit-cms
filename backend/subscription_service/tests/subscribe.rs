@@ -2,7 +2,7 @@ use axum::body::Body;
 use axum::http;
 use axum::http::{Request, StatusCode};
 use serde_json::json;
-use sqlx::{PgPool};
+use sqlx::PgPool;
 use subscription_service::router::create_router;
 use tower::util::ServiceExt;
 use utils::state::AppState;
@@ -12,7 +12,6 @@ async fn subscribe_returns_a_200_for_valid_form_data(pool: PgPool) {
     let mut conn = pool.acquire().await.expect("Unable to acquire connection");
     let state = AppState::test_state(pool);
     let app = create_router().with_state(state);
-
 
     let data = json!({
         "name": "Amrit",

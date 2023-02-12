@@ -13,10 +13,10 @@ pub struct ErrorPayload {
 }
 
 impl ErrorPayload {
-    pub fn new(message: String, level: Option<String>, status: Option<u16>) -> Self {
+    pub fn new(message: &str, level: Option<&str>, status: Option<u16>) -> Self {
         Self {
-            message,
-            level: level.unwrap_or_else(|| "error".to_string()),
+            message: message.to_string(),
+            level: level.unwrap_or("error").to_string(),
             status: status.unwrap_or(400),
         }
     }
@@ -24,7 +24,7 @@ impl ErrorPayload {
 
 impl From<String> for ErrorPayload {
     fn from(item: String) -> Self {
-        ErrorPayload::new(item, None, None)
+        ErrorPayload::new(&item, None, None)
     }
 }
 
@@ -35,7 +35,11 @@ impl IntoResponse for ErrorPayload {
             "level": self.level,
             "status": self.status
         });
-        (StatusCode::INTERNAL_SERVER_ERROR, Json(response)).into_response()
+        (
+            StatusCode::from_u16(self.status).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
+            Json(response),
+        )
+            .into_response()
     }
 }
 

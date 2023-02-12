@@ -1,5 +1,6 @@
-use sqlx::PgPool;
 use crate::configuration::Settings;
+use axum::extract::FromRef;
+use sqlx::PgPool;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -14,7 +15,7 @@ impl AppState {
             .expect("Failed to connect to Postgres.");
         Self {
             settings,
-            connection
+            connection,
         }
     }
 
@@ -22,7 +23,7 @@ impl AppState {
         let settings = Settings::new().expect("Unable to fetch config");
         Self {
             settings,
-            connection
+            connection,
         }
     }
 
@@ -30,7 +31,19 @@ impl AppState {
         let settings = Settings::get_config("test").expect("Unable to fetch test config");
         Self {
             settings,
-            connection
+            connection,
         }
+    }
+}
+
+impl FromRef<AppState> for PgPool {
+    fn from_ref(app_state: &AppState) -> PgPool {
+        app_state.connection.clone()
+    }
+}
+
+impl FromRef<AppState> for Settings {
+    fn from_ref(app_state: &AppState) -> Settings {
+        app_state.settings.clone()
     }
 }
