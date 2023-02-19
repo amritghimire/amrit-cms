@@ -10,7 +10,6 @@ use uuid::Uuid;
 
 #[tracing::instrument(name="Subscription request",
 skip(pool, payload), fields(
-request_id = %Uuid::new_v4(),
 email= %payload.email,
 name= %payload.name
 ))]

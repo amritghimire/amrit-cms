@@ -1,4 +1,4 @@
-use crate::configuration::Settings;
+use crate::configuration::{RunMode, Settings};
 use axum::extract::FromRef;
 use sqlx::PgPool;
 
@@ -28,7 +28,7 @@ impl AppState {
     }
 
     pub fn test_state(connection: PgPool) -> Self {
-        let settings = Settings::get_config("test").expect("Unable to fetch test config");
+        let settings = Settings::get_config(RunMode::Test).expect("Unable to fetch test config");
         Self {
             settings,
             connection,

@@ -10,6 +10,5 @@ pub fn init_subscriber(subscriber: Layered<Layer<Registry>, Registry>) {
 }
 
 pub fn get_subscriber() -> Layered<Layer<Registry>, Registry> {
-    Registry::default()
-        .with(tracing_subscriber::fmt::layer())
+    Registry::default().with(tracing_subscriber::fmt::layer())
 }
