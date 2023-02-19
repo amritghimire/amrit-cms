@@ -1,14 +1,14 @@
 use config::{Config, ConfigError, Environment, File};
+use secrecy::{ExposeSecret, Secret};
 use std::env;
 use std::path::PathBuf;
-use secrecy::{ExposeSecret, Secret};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum RunMode {
     Development,
     Production,
     Test,
-    Local
+    Local,
 }
 
 impl RunMode {
@@ -17,7 +17,7 @@ impl RunMode {
             RunMode::Test => "test",
             RunMode::Production => "production",
             RunMode::Development => "development",
-            RunMode::Local => "local"
+            RunMode::Local => "local",
         }
     }
 }
@@ -39,7 +39,6 @@ impl TryFrom<String> for RunMode {
     }
 }
 
-
 #[derive(Clone, Debug, serde::Deserialize)]
 pub struct Settings {
     pub database: DatabaseSettings,
@@ -59,7 +58,11 @@ impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
         format!(
             "postgres://{}:{}@{}:{}/{}",
-            self.username, self.password.expose_secret(), self.host, self.port, self.database_name
+            self.username,
+            self.password.expose_secret(),
+            self.host,
+            self.port,
+            self.database_name
         )
     }
 }
@@ -87,10 +90,14 @@ impl Settings {
             // This file shouldn't be checked in to git
             s = s
                 .add_source(File::from(dir.join("config/local")).required(false))
-                .add_source(File::from(dir.join(format!("config/{}", run_mode.as_str()))).required(false))
+                .add_source(
+                    File::from(dir.join(format!("config/{}", run_mode.as_str()))).required(false),
+                )
         } else {
             s = s
-                .add_source(File::from(dir.join(format!("config/{}", run_mode.as_str()))).required(false))
+                .add_source(
+                    File::from(dir.join(format!("config/{}", run_mode.as_str()))).required(false),
+                )
                 .add_source(File::from(dir.join("config/local")).required(false))
         }
         let s = s

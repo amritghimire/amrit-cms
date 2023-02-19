@@ -1,8 +1,8 @@
-use tracing_subscriber::layer::{Layered, SubscriberExt};
-use tracing_subscriber::fmt::Layer;
-use tracing_subscriber::Registry;
-use tracing_log::LogTracer;
 use tracing::subscriber::set_global_default;
+use tracing_log::LogTracer;
+use tracing_subscriber::fmt::Layer;
+use tracing_subscriber::layer::{Layered, SubscriberExt};
+use tracing_subscriber::Registry;
 
 pub fn init_subscriber(subscriber: Layered<Layer<Registry>, Registry>) {
     LogTracer::init().expect("Failed to set logger");

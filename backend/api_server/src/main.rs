@@ -1,13 +1,11 @@
-use once_cell::sync::Lazy;
 use api_server::routes;
+use once_cell::sync::Lazy;
 use utils::configuration::Settings;
-
 
 static TRACING: Lazy<()> = Lazy::new(|| {
     let subscriber = api_server::telemetry::get_subscriber();
     api_server::telemetry::init_subscriber(subscriber);
 });
-
 
 #[tokio::main]
 async fn main() {
