@@ -6,6 +6,7 @@ use std::net::SocketAddr;
 
 mod handlers;
 pub mod routes;
+pub mod telemetry;
 
 pub fn run(app: Router, addr: SocketAddr) -> Server<AddrIncoming, IntoMakeService<Router>> {
     println!("Starting server in {}", addr);
