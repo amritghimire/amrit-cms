@@ -5,3 +5,10 @@ members = [
     "backend/api_server", "backend/auth_service", "backend/subscription_service", "backend/utils"
 ]
 
+[profile.release]
+strip = true  # Automatically strip symbols from the binary.
+opt-level = "z"  # Optimize for size.
+lto = true
+codegen-units = 1
+
+

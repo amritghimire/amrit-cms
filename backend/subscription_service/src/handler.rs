@@ -32,7 +32,10 @@ pub async fn subscribe(
     .await
     {
         Ok(_) => Json(json!({"ok": 1})).into_response(),
-        Err(_) => ErrorPayload::new("Unable to add to subscription", Some("error"), Some(400))
-            .into_response(),
+        Err(err) => {
+            tracing::error!("Error occurred {:?}", err);
+            ErrorPayload::new("Unable to add to subscription", Some("error"), Some(500))
+                .into_response()
+        }
     }
 }

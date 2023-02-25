@@ -9,7 +9,7 @@ pub mod routes;
 pub mod telemetry;
 
 pub fn run(app: Router, addr: SocketAddr) -> Server<AddrIncoming, IntoMakeService<Router>> {
-    println!("Starting server in {}", addr);
+    tracing::info!("Starting server in {}", addr);
 
     axum::Server::bind(&addr).serve(app.into_make_service())
 }

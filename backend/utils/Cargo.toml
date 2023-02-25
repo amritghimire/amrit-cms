@@ -25,7 +25,8 @@ features = [
     "postgres",
     "uuid",
     "time",
-    "migrate"
+    "migrate",
+    "offline"
 ]
 
 [build-dependencies]

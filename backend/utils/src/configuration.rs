@@ -42,7 +42,7 @@ impl TryFrom<String> for RunMode {
 #[derive(Clone, Debug, serde::Deserialize)]
 pub struct Settings {
     pub database: DatabaseSettings,
-    pub application_port: u16,
+    pub application: ApplicationSettings,
 }
 
 #[derive(Clone, Debug, serde::Deserialize)]
@@ -56,14 +56,30 @@ pub struct DatabaseSettings {
 
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
-        format!(
-            "postgres://{}:{}@{}:{}/{}",
-            self.username,
-            self.password.expose_secret(),
-            self.host,
-            self.port,
-            self.database_name
-        )
+        if let Ok(database_url) = env::var("DATABASE_URL") {
+            database_url
+        } else {
+            format!(
+                "postgres://{}:{}@{}:{}/{}",
+                self.username,
+                self.password.expose_secret(),
+                self.host,
+                self.port,
+                self.database_name
+            )
+        }
+    }
+}
+
+#[derive(Clone, Debug, serde::Deserialize)]
+pub struct ApplicationSettings {
+    pub port: u16,
+    pub host: String,
+}
+
+impl ApplicationSettings {
+    pub fn url(&self) -> String {
+        format!("{}:{}", self.host, self.port)
     }
 }
 
@@ -103,7 +119,12 @@ impl Settings {
         let s = s
             // Add in settings from the environment (with a prefix of APP)
             // Eg.. `APP_DEBUG=1 ./target/app` would set the `debug` key
-            .add_source(Environment::with_prefix("app"))
+            .add_source(
+                Environment::with_prefix("APP")
+                    .try_parsing(true)
+                    .separator("_")
+                    .list_separator(","),
+            )
             // You may also programmatically change settings
             .build()?;
         // You can deserialize (and thus freeze) the entire configuration as

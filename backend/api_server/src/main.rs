@@ -10,9 +10,7 @@ static TRACING: Lazy<()> = Lazy::new(|| {
 #[tokio::main]
 async fn main() {
     let configuration = Settings::new().expect("Failed to read configuration");
-    let addr = format!("0.0.0.0:{}", configuration.application_port)
-        .parse()
-        .unwrap();
+    let addr = configuration.application.url().parse().unwrap();
 
     Lazy::force(&TRACING);
 

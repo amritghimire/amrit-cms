@@ -1,4 +1,5 @@
-/target
+target
 .idea
 config/local.yaml
 /.env
+report.json

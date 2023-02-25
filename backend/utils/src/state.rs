@@ -1,6 +1,8 @@
 use crate::configuration::{RunMode, Settings};
 use axum::extract::FromRef;
+use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
+use std::time::Duration;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -10,8 +12,9 @@ pub struct AppState {
 
 impl AppState {
     pub async fn init(settings: Settings) -> Self {
-        let connection = PgPool::connect(&settings.database.connection_string())
-            .await
+        let connection = PgPoolOptions::new()
+            .acquire_timeout(Duration::from_secs(2))
+            .connect_lazy(&settings.database.connection_string())
             .expect("Failed to connect to Postgres.");
         Self {
             settings,
