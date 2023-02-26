@@ -29,6 +29,11 @@ RUN cargo build --release
 
 FROM alpine:3.17.2 as runtime
 
+ARG DATABASE_URL
+ARG PORT=8080
+
+
+
 RUN apk add --no-cache libgcc
 RUN apk add --update openssl ca-certificates && \
     rm -rf /var/cache/apk/*
@@ -37,6 +42,8 @@ RUN apk add --update openssl ca-certificates && \
 COPY --from=builder /app/target/release/api_server api_server
 COPY config config
 
+ENV DATABASE_URL $DATABASE_URL
+ENV APP_APPLICATION_PORT $PORT
 ENV RUN_MODE production
 
 ENTRYPOINT ["./api_server"]
