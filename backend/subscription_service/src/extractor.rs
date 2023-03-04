@@ -13,6 +13,7 @@ pub struct SubscriptionPayload {
 
 fn validate_forbidden_chars(value: &str) -> Result<(), ValidationError> {
     let is_too_long = value.graphemes(true).count() > 256;
+    let is_empty = value.trim().is_empty();
 
     let forbidden_characters = ['/', '(', ')', '"', '<', '>', '\\', '{', '}'];
     let contains_forbidden_characters = value.chars().any(
