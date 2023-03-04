@@ -54,6 +54,9 @@ async fn subscribe_returns_a_400_for_invalid_form_data(pool: PgPool) {
         (json!({"name": "Amrit"}), "missing the email"),
         (json!({"email": "test@example.com"}), "missing the name"),
         (json!({}), "missing both name and email"),
+        (json!({"name": "", "email": "test@example.com"}), "empty name provided"),
+        (json!({"name":"Amrit", "email":""}), "empty email provided"),
+        (json!({"name":"", "email": ""}), "both fields are empty"),
     ];
 
     for (payload, error_message) in test_cases {

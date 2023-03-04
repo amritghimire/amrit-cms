@@ -17,6 +17,7 @@ utils = {path="../utils"}
 validator = { version = "0.16.0", features = ["validator_derive", "derive"] }
 uuid = { version = "1.3.0", features = ["v4"] }
 time = { version = "0.3.17", features = ["serde"] }
+unicode-segmentation = "1.10.1"
 
 [dependencies.sqlx]
 version = "0.6.2"
