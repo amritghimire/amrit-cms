@@ -26,3 +26,34 @@ fn validate_forbidden_chars(value: &str) -> Result<(), ValidationError> {
 
     Ok(())
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use claims::{assert_err, assert_ok};
+
+    #[test]
+    fn a_256_grapheme_long_name_is_valid() {
+        let name = "a̐".repeat(256);
+        assert_ok!(validate_forbidden_chars(&name));
+    }
+
+    #[test]
+    fn a_name_longer_than_256_graphemes_is_rejected() {
+        let name = "a".repeat(257);
+        assert_err!(validate_forbidden_chars(&name));
+    }
+
+    #[test]
+    fn whitespace_only_names_are_rejected() {
+        let name = " ".to_string();
+        assert_err!(validate_forbidden_chars(&name));
+    }
+
+    #[test]
+    fn empty_names_are_rejected() {
+        let name = "".to_string();
+        assert_err!(validate_forbidden_chars(&name));
+    }
+}
