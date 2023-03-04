@@ -4,7 +4,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(serde::Serialize, serde::Deserialize, Validate)]
 pub struct SubscriptionPayload {
-    #[validate(length(min = 1, message = "Can not be empty"), custom = "validate_forbidden_chars")]
+    #[validate(length(min = 1, message = "Can not be empty"), custom(function = "validate_forbidden_chars", message = "Invalid name passed" ))]
     pub name: String,
 
     #[validate(email)]
