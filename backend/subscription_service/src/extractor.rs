@@ -20,7 +20,7 @@ fn validate_forbidden_chars(value: &str) -> Result<(), ValidationError> {
         |g| forbidden_characters.contains(&g)
     );
 
-    if contains_forbidden_characters || is_too_long {
+    if is_empty || contains_forbidden_characters || is_too_long {
         return Err(ValidationError::new("invalid_values"));
     }
 
