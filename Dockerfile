@@ -43,7 +43,7 @@ COPY --from=builder /app/target/release/api_server api_server
 COPY config config
 
 ENV DATABASE_URL $DATABASE_URL
-ENV APP_APPLICATION_PORT $PORT
+ENV APP_APPLICATION__PORT $PORT
 ENV RUN_MODE production
 
 ENTRYPOINT ["./api_server"]

@@ -122,7 +122,7 @@ impl Settings {
             .add_source(
                 Environment::with_prefix("APP")
                     .try_parsing(true)
-                    .separator("_")
+                    .separator("__")
                     .list_separator(","),
             )
             // You may also programmatically change settings
