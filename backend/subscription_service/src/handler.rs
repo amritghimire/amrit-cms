@@ -34,6 +34,15 @@ pub async fn subscribe(
         Ok(_) => Json(json!({"ok": 1})).into_response(),
         Err(err) => {
             tracing::error!("Error occurred {:?}", err);
+            if let Some(e) = err.into_database_error() {
+                let message: &str = e.message();
+                if message.contains("subscriptions_email_key") && message.contains("duplicate key value") {
+                    tracing::info!("Email already exists");
+                    return ErrorPayload::new("Email already subscribed", Some("error"), Some(400))
+                        .into_response();
+                }
+            }
+
             ErrorPayload::new("Unable to add to subscription", Some("error"), Some(500))
                 .into_response()
         }

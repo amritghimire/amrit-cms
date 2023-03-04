@@ -2,7 +2,7 @@ use axum::body::Body;
 use axum::http;
 use axum::http::{Request, StatusCode};
 use fake::Fake;
-use serde_json::json;
+use serde_json::{json, Value};
 use sqlx::PgPool;
 use subscription_service::router::create_router;
 use tower::util::ServiceExt;
@@ -25,7 +25,7 @@ async fn subscribe_returns_a_200_for_valid_form_data(pool: PgPool) {
         "email": email
     });
 
-    let response = app
+    let response = app.clone()
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
@@ -46,10 +46,26 @@ async fn subscribe_returns_a_200_for_valid_form_data(pool: PgPool) {
 
     assert_eq!(saved.email, email);
     assert_eq!(saved.name, name);
-    //
-    // let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
-    // let body: Value = serde_json::from_slice(&body).unwrap();
-    // assert_eq!(body, json!({ "data": [1, 2, 3, 4] }));
+
+    // Add it again
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/")
+                .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+                .body(Body::from(serde_json::to_vec(&data).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+
+    let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+    let body: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(body, json!({ "level": "error","message": "Email already subscribed", "status": 400} ));
 }
 
 #[sqlx::test]
