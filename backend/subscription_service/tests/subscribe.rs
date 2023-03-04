@@ -1,11 +1,15 @@
 use axum::body::Body;
 use axum::http;
 use axum::http::{Request, StatusCode};
+use fake::Fake;
 use serde_json::json;
 use sqlx::PgPool;
 use subscription_service::router::create_router;
 use tower::util::ServiceExt;
 use utils::state::AppState;
+use fake::faker::name::en::Name;
+use fake::faker::internet::en::SafeEmail;
+
 
 #[sqlx::test]
 async fn subscribe_returns_a_200_for_valid_form_data(pool: PgPool) {
@@ -13,9 +17,12 @@ async fn subscribe_returns_a_200_for_valid_form_data(pool: PgPool) {
     let state = AppState::test_state(pool);
     let app = create_router().with_state(state);
 
+    let name: String = Name().fake();
+    let email: String = SafeEmail().fake();
+
     let data = json!({
-        "name": "Amrit",
-        "email": "test@example.com"
+        "name": name,
+        "email": email
     });
 
     let response = app
@@ -37,8 +44,8 @@ async fn subscribe_returns_a_200_for_valid_form_data(pool: PgPool) {
         .await
         .expect("Unable to fetch the table");
 
-    assert_eq!(saved.email, "test@example.com");
-    assert_eq!(saved.name, "Amrit");
+    assert_eq!(saved.email, email);
+    assert_eq!(saved.name, name);
     //
     // let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
     // let body: Value = serde_json::from_slice(&body).unwrap();
@@ -57,6 +64,7 @@ async fn subscribe_returns_a_400_for_invalid_form_data(pool: PgPool) {
         (json!({"name": "", "email": "test@example.com"}), "empty name provided"),
         (json!({"name":"Amrit", "email":""}), "empty email provided"),
         (json!({"name":"", "email": ""}), "both fields are empty"),
+        (json!({"name": "(Amrit)", "email": "test@example.com"}), "invalid name")
     ];
 
     for (payload, error_message) in test_cases {

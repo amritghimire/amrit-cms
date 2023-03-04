@@ -34,3 +34,5 @@ features = [
 
 [dev-dependencies]
 tower = { version = "0.4.13", features = ["util"] }
+fake = { version = "2.5.0" }
+rand = "0.8.5"
