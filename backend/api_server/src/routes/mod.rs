@@ -28,7 +28,6 @@ pub async fn create_router() -> Router {
         .propagate_x_request_id();
 
     Router::new()
-        // .layer(svc)
         .merge(base_routes())
         .nest(
             "/subscriptions",

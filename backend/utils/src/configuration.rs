@@ -39,10 +39,17 @@ impl TryFrom<String> for RunMode {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, serde::Deserialize, serde::Serialize)]
+pub enum EmailMode {
+    Terminal, // Output to the terminal
+    SMTP,     // Use smtp passwords and options
+}
+
 #[derive(Clone, Debug, serde::Deserialize)]
 pub struct Settings {
     pub database: DatabaseSettings,
     pub application: ApplicationSettings,
+    pub email: EmailSettings,
 }
 
 #[derive(Clone, Debug, serde::Deserialize)]
@@ -81,6 +88,15 @@ impl ApplicationSettings {
     pub fn url(&self) -> String {
         format!("{}:{}", self.host, self.port)
     }
+}
+
+#[derive(Clone, Debug, serde::Deserialize)]
+pub struct EmailSettings {
+    pub mode: EmailMode,
+    pub sender: String,
+    pub relay: Option<String>,
+    pub username: Option<Secret<String>>,
+    pub password: Option<Secret<String>>,
 }
 
 impl Settings {

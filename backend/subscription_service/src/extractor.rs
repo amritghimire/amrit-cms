@@ -1,10 +1,12 @@
-use validator::{Validate, ValidationError};
 use unicode_segmentation::UnicodeSegmentation;
-
+use validator::{Validate, ValidationError};
 
 #[derive(serde::Serialize, serde::Deserialize, Validate)]
 pub struct SubscriptionPayload {
-    #[validate(length(min = 1, message = "Can not be empty"), custom(function = "validate_forbidden_chars", message = "Invalid name passed" ))]
+    #[validate(
+        length(min = 1, message = "Can not be empty"),
+        custom(function = "validate_forbidden_chars", message = "Invalid name passed")
+    )]
     pub name: String,
 
     #[validate(email)]
@@ -16,9 +18,7 @@ fn validate_forbidden_chars(value: &str) -> Result<(), ValidationError> {
     let is_empty = value.trim().is_empty();
 
     let forbidden_characters = ['/', '(', ')', '"', '<', '>', '\\', '{', '}'];
-    let contains_forbidden_characters = value.chars().any(
-        |g| forbidden_characters.contains(&g)
-    );
+    let contains_forbidden_characters = value.chars().any(|g| forbidden_characters.contains(&g));
 
     if is_empty || contains_forbidden_characters || is_too_long {
         return Err(ValidationError::new("invalid_values"));
@@ -26,7 +26,6 @@ fn validate_forbidden_chars(value: &str) -> Result<(), ValidationError> {
 
     Ok(())
 }
-
 
 #[cfg(test)]
 mod tests {

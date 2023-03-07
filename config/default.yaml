@@ -7,3 +7,6 @@ database:
   username: "postgres"
   password: "password"
   database_name: "amrit_cms"
+email:
+  mode: Terminal
+  sender: cms@amritghimire.com

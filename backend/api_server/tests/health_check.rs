@@ -6,7 +6,7 @@ use tower::util::ServiceExt;
 use api_server::routes::create_router;
 
 #[tokio::test]
-async fn hello_world() {
+async fn health_check() {
     let app = create_router().await;
 
     let response = app

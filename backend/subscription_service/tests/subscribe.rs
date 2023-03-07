@@ -1,15 +1,14 @@
 use axum::body::Body;
 use axum::http;
 use axum::http::{Request, StatusCode};
+use fake::faker::internet::en::SafeEmail;
+use fake::faker::name::en::Name;
 use fake::Fake;
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use subscription_service::router::create_router;
 use tower::util::ServiceExt;
 use utils::state::AppState;
-use fake::faker::name::en::Name;
-use fake::faker::internet::en::SafeEmail;
-
 
 #[sqlx::test]
 async fn subscribe_returns_a_200_for_valid_form_data(pool: PgPool) {
@@ -25,7 +24,8 @@ async fn subscribe_returns_a_200_for_valid_form_data(pool: PgPool) {
         "email": email
     });
 
-    let response = app.clone()
+    let response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
@@ -62,10 +62,12 @@ async fn subscribe_returns_a_200_for_valid_form_data(pool: PgPool) {
 
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 
-
     let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
     let body: Value = serde_json::from_slice(&body).unwrap();
-    assert_eq!(body, json!({ "level": "error","message": "Email already subscribed", "status": 400} ));
+    assert_eq!(
+        body,
+        json!({ "level": "error","message": "Email already subscribed", "status": 400} )
+    );
 }
 
 #[sqlx::test]
@@ -77,10 +79,16 @@ async fn subscribe_returns_a_400_for_invalid_form_data(pool: PgPool) {
         (json!({"name": "Amrit"}), "missing the email"),
         (json!({"email": "test@example.com"}), "missing the name"),
         (json!({}), "missing both name and email"),
-        (json!({"name": "", "email": "test@example.com"}), "empty name provided"),
+        (
+            json!({"name": "", "email": "test@example.com"}),
+            "empty name provided",
+        ),
         (json!({"name":"Amrit", "email":""}), "empty email provided"),
         (json!({"name":"", "email": ""}), "both fields are empty"),
-        (json!({"name": "(Amrit)", "email": "test@example.com"}), "invalid name")
+        (
+            json!({"name": "(Amrit)", "email": "test@example.com"}),
+            "invalid name",
+        ),
     ];
 
     for (payload, error_message) in test_cases {

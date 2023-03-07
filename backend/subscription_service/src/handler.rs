@@ -36,7 +36,9 @@ pub async fn subscribe(
             tracing::error!("Error occurred {:?}", err);
             if let Some(e) = err.into_database_error() {
                 let message: &str = e.message();
-                if message.contains("subscriptions_email_key") && message.contains("duplicate key value") {
+                if message.contains("subscriptions_email_key")
+                    && message.contains("duplicate key value")
+                {
                     tracing::info!("Email already exists");
                     return ErrorPayload::new("Email already subscribed", Some("error"), Some(400))
                         .into_response();
