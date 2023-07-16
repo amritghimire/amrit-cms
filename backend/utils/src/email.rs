@@ -46,7 +46,7 @@ impl EmailTrait for SmtpClient {
             .from(self.sender.parse().unwrap())
             .reply_to(self.sender.parse().unwrap())
             .to(to.parse().unwrap())
-            .subject(&subject)
+            .subject(subject)
             .header(ContentType::TEXT_PLAIN)
             .body(body)?;
         self.transport.clone().send(&email)?;

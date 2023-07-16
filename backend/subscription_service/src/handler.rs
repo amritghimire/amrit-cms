@@ -1,6 +1,6 @@
 use crate::extractor::SubscriptionPayload;
 use axum::extract::State;
-use axum::response::IntoResponse;
+use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde_json::json;
 use sqlx::PgPool;
@@ -16,7 +16,7 @@ name= %payload.name
 pub async fn subscribe(
     State(pool): State<PgPool>,
     ValidatedForm(payload): ValidatedForm<SubscriptionPayload>,
-) -> impl IntoResponse {
+) -> Response {
     tracing::info!("Adding a new subscription");
     match sqlx::query!(
         r#"
