@@ -13,7 +13,7 @@ use utils::state::AppState;
 #[sqlx::test]
 async fn subscribe_returns_a_200_for_valid_form_data(pool: PgPool) {
     let mut conn = pool.acquire().await.expect("Unable to acquire connection");
-    let state = AppState::test_state(pool);
+    let state = AppState::test_state(pool, None);
     let app = create_router().with_state(state);
 
     let name: String = Name().fake();
@@ -72,7 +72,7 @@ async fn subscribe_returns_a_200_for_valid_form_data(pool: PgPool) {
 
 #[sqlx::test]
 async fn subscribe_returns_a_400_for_invalid_form_data(pool: PgPool) {
-    let state = AppState::test_state(pool);
+    let state = AppState::test_state(pool, None);
     let app = create_router().with_state(state);
 
     let test_cases = vec![

@@ -43,6 +43,14 @@ impl TryFrom<String> for RunMode {
 pub enum EmailMode {
     Terminal, // Output to the terminal
     SMTP,     // Use smtp passwords and options
+    InMemory, // Use in memory email client
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, serde::Deserialize, serde::Serialize)]
+pub enum TlsMode {
+    Local,
+    Tls,      // Insecure connection only
+    StartTls, // Start with insecure connection and use STARTTLS when available
 }
 
 #[derive(Clone, Debug, serde::Deserialize)]
@@ -97,6 +105,8 @@ pub struct EmailSettings {
     pub relay: Option<String>,
     pub username: Option<Secret<String>>,
     pub password: Option<Secret<String>>,
+    pub port: Option<u16>,
+    pub tls: Option<TlsMode>,
 }
 
 impl Settings {
