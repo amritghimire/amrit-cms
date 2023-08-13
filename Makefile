@@ -49,6 +49,10 @@ check_all: check clippy check_fmt check_sqlx test
 init_db:
 	./scripts/init_db.sh
 
+.PHONY: migrate
+migrate:
+	SKIP_DOCKER=true ./scripts/init_db.sh
+
 .PHONY: sqlx
 sqlx:
 	sqlx $(filter-out $@,$(MAKECMDGOALS))

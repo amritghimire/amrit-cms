@@ -1,3 +1,5 @@
+use std::sync::mpsc;
+use std::sync::mpsc::SyncSender;
 use crate::configuration::{EmailMode, EmailSettings, TlsMode};
 use lettre::message::header::ContentType;
 use lettre::transport::smtp::authentication::Credentials;
@@ -5,19 +7,16 @@ use lettre::transport::smtp::client::Tls;
 use lettre::{Message, SmtpTransport, Transport};
 use secrecy::ExposeSecret;
 
-pub trait EmailTrait {
+pub trait EmailTrait{
     fn send_email(&mut self, to: String, subject: String, body: String) -> anyhow::Result<()>;
     fn get_sender(&self) -> &str;
-    fn get_mails(&self) -> Vec<EmailObject> {
-        vec![]
-    }
 }
 
 #[derive(Clone)]
 pub enum EmailClient {
     SmtpClient(SmtpClient),
     TerminalClient(TerminalClient),
-    InMemoryClient(InMemoryClient),
+    MessagePassingClient(MessagePassingClient),
 }
 
 #[derive(Clone)]
@@ -121,7 +120,7 @@ impl EmailTrait for TerminalClient {
     }
 }
 
-#[derive(Clone)]
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
 pub struct EmailObject {
     pub sender: String,
     pub to: String,
@@ -129,38 +128,44 @@ pub struct EmailObject {
     pub body: String,
 }
 
+
 #[derive(Clone)]
-pub struct InMemoryClient {
+pub struct MessagePassingClient  {
     sender: String,
-    mails: Vec<EmailObject>,
+    tx: SyncSender<EmailObject>
 }
 
-impl InMemoryClient {
+impl MessagePassingClient {
     pub fn new(settings: EmailSettings) -> Self {
+        let (tx, _) = mpsc::sync_channel(5/* usize */);
+
         Self {
             sender: settings.sender,
-            mails: Vec::new(),
+            tx,
+        }
+    }
+
+    pub fn with_tx(settings: EmailSettings, tx: SyncSender<EmailObject>) -> Self {
+        Self {
+            sender: settings.sender,
+            tx,
         }
     }
 }
 
-impl EmailTrait for InMemoryClient {
+impl EmailTrait for MessagePassingClient {
     fn send_email(&mut self, to: String, subject: String, body: String) -> anyhow::Result<()> {
-        self.mails.push(EmailObject {
+        self.tx.send(EmailObject {
             sender: self.sender.clone(),
             to,
             subject,
             body,
-        });
+        }).unwrap();
         Ok(())
     }
 
     fn get_sender(&self) -> &str {
         &self.sender
-    }
-
-    fn get_mails(&self) -> Vec<EmailObject> {
-        self.mails.clone()
     }
 }
 
@@ -168,7 +173,7 @@ pub fn get_email_client(settings: EmailSettings) -> EmailClient {
     match settings.mode {
         EmailMode::Terminal => EmailClient::TerminalClient(TerminalClient::new(settings)),
         EmailMode::SMTP => EmailClient::SmtpClient(SmtpClient::new(settings)),
-        EmailMode::InMemory => EmailClient::InMemoryClient(InMemoryClient::new(settings)),
+        EmailMode::MessagePassing => EmailClient::MessagePassingClient(MessagePassingClient::new(settings)),
     }
 }
 
@@ -177,7 +182,7 @@ impl EmailClient {
         match self {
             EmailClient::SmtpClient(c) => Box::new(c),
             EmailClient::TerminalClient(c) => Box::new(c),
-            EmailClient::InMemoryClient(c) => Box::new(c),
+            EmailClient::MessagePassingClient(c) => Box::new(c),
         }
     }
 }

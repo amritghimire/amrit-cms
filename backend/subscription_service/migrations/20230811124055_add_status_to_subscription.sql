@@ -1,0 +1,1 @@
+ALTER table subscriptions add column status text default 'pending';

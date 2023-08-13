@@ -3,3 +3,4 @@ pub mod email;
 pub mod errors;
 pub mod state;
 pub mod validation;
+pub mod test;

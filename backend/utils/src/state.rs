@@ -1,5 +1,5 @@
 use crate::configuration::{RunMode, Settings};
-use crate::email::{get_email_client, EmailClient, InMemoryClient};
+use crate::email::{get_email_client, EmailClient, MessagePassingClient};
 use axum::extract::FromRef;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
@@ -43,7 +43,17 @@ impl AppState {
         let settings = config.unwrap_or_else(|| {
             Settings::get_config(RunMode::Test).expect("Unable to fetch test config")
         });
-        let email_client = EmailClient::InMemoryClient(InMemoryClient::new(settings.email.clone()));
+        let email_client = EmailClient::MessagePassingClient(MessagePassingClient::new(settings.email.clone()));
+
+        Self {
+            settings,
+            connection,
+            email_client,
+        }
+    }
+
+    pub fn test_email_state(connection: PgPool, email_client: EmailClient) -> Self {
+        let settings = Settings::get_config(RunMode::Test).expect("Unable to fetch test config");
 
         Self {
             settings,

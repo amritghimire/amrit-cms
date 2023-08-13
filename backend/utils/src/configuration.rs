@@ -43,7 +43,7 @@ impl TryFrom<String> for RunMode {
 pub enum EmailMode {
     Terminal, // Output to the terminal
     SMTP,     // Use smtp passwords and options
-    InMemory, // Use in memory email client
+    MessagePassing, // Use in memory email client
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, serde::Deserialize, serde::Serialize)]
