@@ -1,13 +1,13 @@
-use std::sync::mpsc;
-use std::sync::mpsc::SyncSender;
 use crate::configuration::{EmailMode, EmailSettings, TlsMode};
 use lettre::message::header::ContentType;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::transport::smtp::client::Tls;
 use lettre::{Message, SmtpTransport, Transport};
 use secrecy::ExposeSecret;
+use std::sync::mpsc;
+use std::sync::mpsc::SyncSender;
 
-pub trait EmailTrait{
+pub trait EmailTrait {
     fn send_email(&mut self, to: String, subject: String, body: String) -> anyhow::Result<()>;
     fn get_sender(&self) -> &str;
 }
@@ -128,16 +128,15 @@ pub struct EmailObject {
     pub body: String,
 }
 
-
 #[derive(Clone)]
-pub struct MessagePassingClient  {
+pub struct MessagePassingClient {
     sender: String,
-    tx: SyncSender<EmailObject>
+    tx: SyncSender<EmailObject>,
 }
 
 impl MessagePassingClient {
     pub fn new(settings: EmailSettings) -> Self {
-        let (tx, _) = mpsc::sync_channel(5/* usize */);
+        let (tx, _) = mpsc::sync_channel(5 /* usize */);
 
         Self {
             sender: settings.sender,
@@ -155,12 +154,14 @@ impl MessagePassingClient {
 
 impl EmailTrait for MessagePassingClient {
     fn send_email(&mut self, to: String, subject: String, body: String) -> anyhow::Result<()> {
-        self.tx.send(EmailObject {
-            sender: self.sender.clone(),
-            to,
-            subject,
-            body,
-        }).unwrap();
+        self.tx
+            .send(EmailObject {
+                sender: self.sender.clone(),
+                to,
+                subject,
+                body,
+            })
+            .unwrap();
         Ok(())
     }
 
@@ -173,7 +174,9 @@ pub fn get_email_client(settings: EmailSettings) -> EmailClient {
     match settings.mode {
         EmailMode::Terminal => EmailClient::TerminalClient(TerminalClient::new(settings)),
         EmailMode::SMTP => EmailClient::SmtpClient(SmtpClient::new(settings)),
-        EmailMode::MessagePassing => EmailClient::MessagePassingClient(MessagePassingClient::new(settings)),
+        EmailMode::MessagePassing => {
+            EmailClient::MessagePassingClient(MessagePassingClient::new(settings))
+        }
     }
 }
 

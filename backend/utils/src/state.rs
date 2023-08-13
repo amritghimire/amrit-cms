@@ -43,7 +43,8 @@ impl AppState {
         let settings = config.unwrap_or_else(|| {
             Settings::get_config(RunMode::Test).expect("Unable to fetch test config")
         });
-        let email_client = EmailClient::MessagePassingClient(MessagePassingClient::new(settings.email.clone()));
+        let email_client =
+            EmailClient::MessagePassingClient(MessagePassingClient::new(settings.email.clone()));
 
         Self {
             settings,

@@ -3,20 +3,21 @@ use axum::extract::State;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde_json::json;
-use sqlx::PgPool;
 use utils::errors::ErrorPayload;
+use utils::state::AppState;
 use utils::validation::ValidatedForm;
 use uuid::Uuid;
 
 #[tracing::instrument(name="Subscription request",
-skip(pool, payload), fields(
+skip(state, payload), fields(
 email= %payload.email,
 name= %payload.name
 ))]
 pub async fn subscribe(
-    State(pool): State<PgPool>,
+    State(state): State<AppState>,
     ValidatedForm(payload): ValidatedForm<SubscriptionPayload>,
 ) -> Response {
+    let pool = state.connection;
     tracing::info!("Adding a new subscription");
     match sqlx::query!(
         r#"
@@ -31,7 +32,20 @@ pub async fn subscribe(
     .execute(&pool)
     .await
     {
-        Ok(_) => Json(json!({"ok": 1})).into_response(),
+        Ok(_) => {
+            match state.email_client.unwrap().send_email(
+                payload.email,
+                "Welcome to our newsletter!".to_string(),
+                "Hey".to_string(),
+            ) {
+                Ok(_) => Json(json!({"ok": 1})).into_response(),
+                Err(err) => {
+                    tracing::error!("Error occurred {:?}", err);
+                    ErrorPayload::new("Unable to send email", Some("error"), Some(400))
+                        .into_response()
+                }
+            }
+        }
         Err(err) => {
             tracing::error!("Error occurred {:?}", err);
             if let Some(e) = err.into_database_error() {

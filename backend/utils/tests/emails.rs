@@ -11,12 +11,13 @@ async fn send_email_saved_in_memory() {
     let (tx, rx) = mpsc::sync_channel(2);
     let settings = Settings::get_config(RunMode::Test).expect("Unable to fetch test config");
 
-    let email_client = EmailClient::MessagePassingClient(
-        MessagePassingClient::with_tx(settings.email.clone(), tx)
-    );
+    let email_client = EmailClient::MessagePassingClient(MessagePassingClient::with_tx(
+        settings.email.clone(),
+        tx,
+    ));
 
-
-    email_client.unwrap()
+    email_client
+        .unwrap()
         .send_email(
             recipient_mail.clone(),
             mail_subject.clone(),
