@@ -90,7 +90,7 @@ impl DatabaseSettings {
 pub struct ApplicationSettings {
     pub port: u16,
     pub host: String,
-    pub scheme: Option<String>
+    pub scheme: Option<String>,
 }
 
 impl ApplicationSettings {
@@ -99,7 +99,11 @@ impl ApplicationSettings {
     }
 
     pub fn full_url(&self) -> String {
-        format!("{}://{}", self.scheme.clone().unwrap_or("https".to_string()), self.url())
+        format!(
+            "{}://{}",
+            self.scheme.clone().unwrap_or("https".to_string()),
+            self.url()
+        )
     }
 }
 

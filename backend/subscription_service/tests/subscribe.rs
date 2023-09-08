@@ -1,6 +1,7 @@
 use axum::body::Body;
-use axum::http;
 use axum::http::{Request, StatusCode};
+use axum::response::Response;
+use axum::{http, Router};
 use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
 use fake::Fake;
@@ -13,34 +14,31 @@ use utils::configuration::{RunMode, Settings};
 use utils::state::AppState;
 use utils::test;
 
-
 #[sqlx::test]
-async fn subscribe_for_valid_form_data(pool: PgPool) {
-    let (tx, rx) = mpsc::sync_channel(5);
-    let settings = Settings::get_config(RunMode::Test).expect("Unable to fetch test config");
-    let mut conn = pool.acquire().await.expect("Unable to acquire connection");
-
+async fn subscribe_200_for_valid_form_data(pool: PgPool) {
+    let (tx, _rx) = mpsc::sync_channel(5);
     let state = test::test_state_for_email(pool, tx);
     let app = create_router().with_state(state);
 
     let name: String = Name().fake();
     let email: String = SafeEmail().fake();
 
-    let data = json!({
-        "name": name,
-        "email": email
-    });
-
-    let request = Request::builder()
-        .method(http::Method::POST)
-        .uri("/")
-        .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-        .body(Body::from(serde_json::to_vec(&data).unwrap()))
-        .unwrap();
-
-    let response = app.clone().oneshot(request).await.unwrap();
+    let response = send_request(&app, &name, &email).await;
 
     assert_eq!(response.status(), StatusCode::OK);
+}
+
+#[sqlx::test]
+async fn subscribe_valid_form_data_is_inserted(pool: PgPool) {
+    let (tx, _rx) = mpsc::sync_channel(5);
+    let mut conn = pool.acquire().await.expect("Unable to acquire connection");
+    let state = test::test_state_for_email(pool, tx);
+    let app = create_router().with_state(state);
+
+    let name: String = Name().fake();
+    let email: String = SafeEmail().fake();
+
+    send_request(&app, &name, &email).await;
 
     let saved = sqlx::query!("SELECT email, name, status FROM subscriptions")
         .fetch_one(&mut conn)
@@ -50,6 +48,19 @@ async fn subscribe_for_valid_form_data(pool: PgPool) {
     assert_eq!(saved.email, email);
     assert_eq!(saved.name, name);
     assert_eq!(saved.status, "pending");
+}
+
+#[sqlx::test]
+async fn subscribe_valid_form_email_sent(pool: PgPool) {
+    let (tx, rx) = mpsc::sync_channel(5);
+    let settings = Settings::get_config(RunMode::Test).expect("Unable to fetch test config");
+    let state = test::test_state_for_email(pool, tx);
+    let app = create_router().with_state(state);
+
+    let name: String = Name().fake();
+    let email: String = SafeEmail().fake();
+
+    send_request(&app, &name, &email).await;
 
     let email_object = rx
         .try_recv()
@@ -58,15 +69,21 @@ async fn subscribe_for_valid_form_data(pool: PgPool) {
     assert_eq!(email_object.to, email);
     assert_eq!(email_object.subject, "Welcome to our newsletter!");
     _get_link(&email_object.body); // TODO: Verify the link validity
+}
 
-    // Add it again
-    let request = Request::builder()
-        .method(http::Method::POST)
-        .uri("/")
-        .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-        .body(Body::from(serde_json::to_vec(&data).unwrap()))
-        .unwrap();
-    let response = app.clone().oneshot(request).await.unwrap();
+#[sqlx::test]
+async fn subscribe_valid_form_already_subscribed(pool: PgPool) {
+    let (tx, _rx) = mpsc::sync_channel(5);
+    let state = test::test_state_for_email(pool, tx);
+    let app = create_router().with_state(state);
+
+    let name: String = Name().fake();
+    let email: String = SafeEmail().fake();
+
+    send_request(&app, &name, &email).await;
+
+    // Send it again
+    let response = send_request(&app, &name, &email).await;
 
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 
@@ -100,18 +117,7 @@ async fn subscribe_returns_a_400_for_invalid_form_data(pool: PgPool) {
     ];
 
     for (payload, error_message) in test_cases {
-        let response = app
-            .clone()
-            .oneshot(
-                Request::builder()
-                    .method(http::Method::POST)
-                    .uri("/")
-                    .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-                    .body(Body::from(serde_json::to_vec(&payload).unwrap()))
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
+        let response = app.clone().oneshot(build_request(&payload)).await.unwrap();
 
         assert_eq!(
             response.status(),
@@ -122,6 +128,26 @@ async fn subscribe_returns_a_400_for_invalid_form_data(pool: PgPool) {
     }
 }
 
+async fn send_request(app: &Router, name: &str, email: &str) -> Response {
+    let data = json!({
+        "name": name,
+        "email": email
+    });
+
+    let request = build_request(&data);
+
+    app.clone().oneshot(request).await.unwrap()
+}
+
+fn build_request(data: &Value) -> Request<Body> {
+    let request = Request::builder()
+        .method(http::Method::POST)
+        .uri("/")
+        .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+        .body(Body::from(serde_json::to_vec(&data).unwrap()))
+        .unwrap();
+    request
+}
 
 fn _get_link(s: &str) -> String {
     let links: Vec<_> = linkify::LinkFinder::new()
