@@ -13,6 +13,7 @@ use utils::configuration::{RunMode, Settings};
 use utils::state::AppState;
 use utils::test;
 
+
 #[sqlx::test]
 async fn subscribe_for_valid_form_data(pool: PgPool) {
     let (tx, rx) = mpsc::sync_channel(5);
@@ -41,13 +42,14 @@ async fn subscribe_for_valid_form_data(pool: PgPool) {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let saved = sqlx::query!("SELECT email, name FROM subscriptions")
+    let saved = sqlx::query!("SELECT email, name, status FROM subscriptions")
         .fetch_one(&mut conn)
         .await
         .expect("Unable to fetch the table");
 
     assert_eq!(saved.email, email);
     assert_eq!(saved.name, name);
+    assert_eq!(saved.status, "pending");
 
     let email_object = rx
         .try_recv()
@@ -55,6 +57,7 @@ async fn subscribe_for_valid_form_data(pool: PgPool) {
     assert_eq!(email_object.sender, settings.email.sender);
     assert_eq!(email_object.to, email);
     assert_eq!(email_object.subject, "Welcome to our newsletter!");
+    _get_link(&email_object.body); // TODO: Verify the link validity
 
     // Add it again
     let request = Request::builder()
@@ -117,4 +120,14 @@ async fn subscribe_returns_a_400_for_invalid_form_data(pool: PgPool) {
             error_message
         );
     }
+}
+
+
+fn _get_link(s: &str) -> String {
+    let links: Vec<_> = linkify::LinkFinder::new()
+        .links(s)
+        .filter(|l| *l.kind() == linkify::LinkKind::Url)
+        .collect();
+    assert_eq!(links.len(), 1);
+    links[0].as_str().to_owned()
 }

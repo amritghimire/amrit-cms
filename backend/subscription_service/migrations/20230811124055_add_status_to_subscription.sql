@@ -1,1 +1,1 @@
-ALTER table subscriptions add column status text default 'pending';
+ALTER table subscriptions add column status text default 'pending' not null ;
