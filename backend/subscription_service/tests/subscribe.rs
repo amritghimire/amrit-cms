@@ -14,7 +14,7 @@ use utils::state::AppState;
 use utils::test;
 
 #[sqlx::test]
-async fn subscribe_returns_a_200_for_valid_form_data(pool: PgPool) {
+async fn subscribe_for_valid_form_data(pool: PgPool) {
     let (tx, rx) = mpsc::sync_channel(5);
     let settings = Settings::get_config(RunMode::Test).expect("Unable to fetch test config");
     let mut conn = pool.acquire().await.expect("Unable to acquire connection");
