@@ -1,5 +1,4 @@
-use axum::body::Body;
-use axum::http::{Request, StatusCode};
+use axum::http::StatusCode;
 use axum::response::Response;
 use axum::{http, Router};
 use fake::faker::internet::en::SafeEmail;
@@ -10,6 +9,7 @@ use sqlx::PgPool;
 use std::sync::mpsc;
 use subscription_service::router::create_router;
 use tower::util::ServiceExt;
+use url::Url;
 use utils::configuration::{RunMode, Settings};
 use utils::state::AppState;
 use utils::test;
@@ -68,7 +68,13 @@ async fn subscribe_valid_form_email_sent(pool: PgPool) {
     assert_eq!(email_object.sender, settings.email.sender);
     assert_eq!(email_object.to, email);
     assert_eq!(email_object.subject, "Welcome to our newsletter!");
-    _get_link(&email_object.body); // TODO: Verify the link validity
+    let raw_link = subscription_service::helper::get_link(&email_object.body);
+    let confirmation_link = Url::parse(&raw_link).unwrap();
+    let application_link = Url::parse(&settings.application.full_url()).unwrap();
+    assert_eq!(
+        confirmation_link.host_str().unwrap(),
+        application_link.host_str().unwrap()
+    )
 }
 
 #[sqlx::test]
@@ -117,7 +123,11 @@ async fn subscribe_returns_a_400_for_invalid_form_data(pool: PgPool) {
     ];
 
     for (payload, error_message) in test_cases {
-        let response = app.clone().oneshot(build_request(&payload)).await.unwrap();
+        let response = app
+            .clone()
+            .oneshot(test::build_request("/", http::Method::POST, &payload))
+            .await
+            .unwrap();
 
         assert_eq!(
             response.status(),
@@ -134,26 +144,7 @@ async fn send_request(app: &Router, name: &str, email: &str) -> Response {
         "email": email
     });
 
-    let request = build_request(&data);
+    let request = test::build_request("/", http::Method::POST, &data);
 
     app.clone().oneshot(request).await.unwrap()
-}
-
-fn build_request(data: &Value) -> Request<Body> {
-    let request = Request::builder()
-        .method(http::Method::POST)
-        .uri("/")
-        .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-        .body(Body::from(serde_json::to_vec(&data).unwrap()))
-        .unwrap();
-    request
-}
-
-fn _get_link(s: &str) -> String {
-    let links: Vec<_> = linkify::LinkFinder::new()
-        .links(s)
-        .filter(|l| *l.kind() == linkify::LinkKind::Url)
-        .collect();
-    assert_eq!(links.len(), 1);
-    links[0].as_str().to_owned()
 }

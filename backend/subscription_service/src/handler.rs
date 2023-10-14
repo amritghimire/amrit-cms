@@ -1,14 +1,28 @@
 use crate::extractor::SubscriptionPayload;
-use axum::extract::State;
+use crate::helper;
+use crate::helper::{
+    confirm_subscription, generate_subscription_token, get_subscriber_id_from_token, store_token,
+};
+use axum::extract::{Query, State};
+use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::Json;
-use serde_json::json;
-use sqlx::postgres::PgQueryResult;
-use sqlx::{Error, PgPool};
-use utils::errors::ErrorPayload;
+use serde::Deserialize;
+use sqlx::PgPool;
 use utils::state::AppState;
 use utils::validation::ValidatedForm;
-use uuid::Uuid;
+
+#[derive(Deserialize, Debug)]
+pub struct TokenQuery {
+    token: String,
+}
+
+impl Default for TokenQuery {
+    fn default() -> Self {
+        Self {
+            token: "".to_string(),
+        }
+    }
+}
 
 #[tracing::instrument(name="Subscription request",
 skip(state, payload), fields(
@@ -21,64 +35,41 @@ pub async fn subscribe(
 ) -> Response {
     let pool = &state.connection;
     tracing::info!("Adding a new subscription");
-    match insert_subscriber(pool, &payload).await {
-        Ok(_) => send_confirmation_link(&state, payload),
+    let subscriber_id = match helper::insert_subscriber(pool, &payload).await {
+        Ok(subscriber_id) => subscriber_id,
         Err(err) => {
             tracing::error!("Error occurred {:?}", err);
-            handle_email_error(err).into_response()
+            return helper::handle_database_error(err).into_response();
         }
+    };
+    let subscription_token = generate_subscription_token();
+    if let Err(err) = store_token(pool, subscriber_id, &subscription_token).await {
+        return helper::handle_database_error(err).into_response();
     }
+    helper::send_confirmation_link(&state, payload, subscription_token)
 }
 
-#[tracing::instrument(name = "Inserting subscriber to database", skip(pool, payload))]
-async fn insert_subscriber(
-    pool: &PgPool,
-    payload: &SubscriptionPayload,
-) -> Result<PgQueryResult, Error> {
-    sqlx::query!(
-        r#"
-        INSERT INTO subscriptions (id, email, name, subscribed_at)
-        VALUES ($1, $2, $3, $4)
-        "#,
-        Uuid::new_v4(),
-        payload.email,
-        payload.name,
-        time::OffsetDateTime::now_utc()
-    )
-    .execute(pool)
-    .await
-}
-
-fn handle_email_error(err: Error) -> ErrorPayload {
-    if let Some(e) = err.into_database_error() {
-        let message: &str = e.message();
-        if message.contains("subscriptions_email_key") && message.contains("duplicate key value") {
-            tracing::info!("Email already exists");
-            return ErrorPayload::new("Email already subscribed", Some("error"), Some(400));
+#[tracing::instrument(name = "Confirmation request", skip(token, pool))]
+pub async fn confirm(token: Query<TokenQuery>, State(pool): State<PgPool>) -> impl IntoResponse {
+    let id = match get_subscriber_id_from_token(&pool, &token.token).await {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Error occurred when trying to verify token",
+            )
         }
-    }
-
-    ErrorPayload::new("Unable to add to subscription", Some("error"), Some(500))
-}
-
-#[tracing::instrument(name = "Sending confirmation link", skip(state, payload))]
-fn send_confirmation_link(state: &AppState, payload: SubscriptionPayload) -> Response {
-    let confirmation_link = format!(
-        "{}/subscription/confirm",
-        state.settings.application.full_url()
-    );
-    match state.email_client.to_owned().unwrap().send_email(
-        payload.email,
-        "Welcome to our newsletter!".to_string(),
-        format!(
-            "Welcome to our newsletter. Please visit {} to confirm your subscription",
-            { confirmation_link }
-        ),
-    ) {
-        Ok(_) => Json(json!({"ok": 1})).into_response(),
-        Err(err) => {
-            tracing::error!("Error occurred {:?}", err);
-            ErrorPayload::new("Unable to send email", Some("error"), Some(400)).into_response()
+    };
+    match id {
+        None => (StatusCode::UNAUTHORIZED, "Cannot find the token"),
+        Some(subscriber_id) => {
+            if confirm_subscription(&pool, subscriber_id).await.is_err() {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Cannot confirm the subscription",
+                );
+            }
+            (StatusCode::OK, "Subscription verified successfully")
         }
     }
 }
