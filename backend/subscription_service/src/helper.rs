@@ -4,7 +4,7 @@ use axum::Json;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use serde_json::json;
-use sqlx::{Error, PgPool};
+use sqlx::{Error, PgPool, Postgres, Transaction};
 use utils::errors::ErrorPayload;
 use utils::state::AppState;
 use uuid::Uuid;
@@ -18,9 +18,9 @@ pub fn get_link(s: &str) -> String {
     links[0].as_str().to_owned()
 }
 
-#[tracing::instrument(name = "Inserting subscriber to database", skip(pool, payload))]
+#[tracing::instrument(name = "Inserting subscriber to database", skip(transaction, payload))]
 pub async fn insert_subscriber(
-    pool: &PgPool,
+    transaction: &mut Transaction<'_, Postgres>,
     payload: &SubscriptionPayload,
 ) -> Result<Uuid, Error> {
     let subscriber_id = Uuid::new_v4();
@@ -34,7 +34,7 @@ pub async fn insert_subscriber(
         payload.name,
         time::OffsetDateTime::now_utc()
     )
-    .execute(pool)
+    .execute(transaction)
     .await?;
 
     Ok(subscriber_id)
@@ -79,9 +79,9 @@ pub fn send_confirmation_link(
     }
 }
 
-#[tracing::instrument(name = "Store token in database", skip(pool))]
+#[tracing::instrument(name = "Store token in database", skip(transaction))]
 pub async fn store_token(
-    pool: &PgPool,
+    transaction: &mut Transaction<'_, Postgres>,
     subscriber_id: Uuid,
     subscription_token: &str,
 ) -> Result<(), Error> {
@@ -92,7 +92,7 @@ pub async fn store_token(
         subscription_token,
         subscriber_id
     )
-    .execute(pool)
+    .execute(transaction)
     .await
     .map_err(|e| {
         tracing::error!("Failed to execute query {:?}", e);
