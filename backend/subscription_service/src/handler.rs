@@ -5,11 +5,13 @@ use crate::helper::{
 };
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
+use axum::response::{IntoResponse, Result};
 use serde::Deserialize;
 use sqlx::PgPool;
+use utils::errors::ErrorPayload;
 use utils::state::AppState;
 use utils::validation::ValidatedForm;
+use crate::errors::subscribe::SubscribeError;
 
 #[derive(Deserialize, Debug)]
 pub struct TokenQuery {
@@ -32,53 +34,22 @@ name= %payload.name
 pub async fn subscribe(
     State(state): State<AppState>,
     ValidatedForm(payload): ValidatedForm<SubscriptionPayload>,
-) -> Response {
+) -> Result<impl IntoResponse, ErrorPayload> {
     let pool = &state.connection;
     tracing::info!("Adding a new subscription");
+    let mut transaction = pool.begin().await.map_err(SubscribeError::DatabaseError)?;
 
-    let mut transaction = match pool.begin().await {
-        Ok(transaction) => transaction,
-        Err(err) => return helper::handle_database_error(err).into_response()
-    };
-    let subscriber_id = match helper::insert_subscriber(&mut transaction, &payload).await {
-        Ok(subscriber_id) => subscriber_id,
-        Err(err) => {
-            tracing::error!("Error occurred {:?}", err);
-            return helper::handle_database_error(err).into_response();
-        }
-    };
+    let subscriber_id =  helper::insert_subscriber(&mut transaction, &payload).await?;
     let subscription_token = generate_subscription_token();
-    if let Err(err) = store_token(&mut transaction, subscriber_id, &subscription_token).await {
-        return helper::handle_database_error(err).into_response();
-    }
-
-    if let Err(err) = transaction.commit().await {
-        return helper::handle_database_error(err).into_response();
-    }
-    helper::send_confirmation_link(&state, payload, subscription_token)
+    store_token(&mut transaction, subscriber_id, &subscription_token).await?;
+    transaction.commit().await.map_err(SubscribeError::DatabaseError)?;
+    let res = helper::send_confirmation_link(&state, payload, subscription_token)?;
+    Ok(res)
 }
 
 #[tracing::instrument(name = "Confirmation request", skip(token, pool))]
-pub async fn confirm(token: Query<TokenQuery>, State(pool): State<PgPool>) -> impl IntoResponse {
-    let id = match get_subscriber_id_from_token(&pool, &token.token).await {
-        Ok(id) => id,
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Error occurred when trying to verify token",
-            )
-        }
-    };
-    match id {
-        None => (StatusCode::UNAUTHORIZED, "Cannot find the token"),
-        Some(subscriber_id) => {
-            if confirm_subscription(&pool, subscriber_id).await.is_err() {
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Cannot confirm the subscription",
-                );
-            }
-            (StatusCode::OK, "Subscription verified successfully")
-        }
-    }
+pub async fn confirm(token: Query<TokenQuery>, State(pool): State<PgPool>) -> Result<impl IntoResponse, ErrorPayload> {
+    let id = get_subscriber_id_from_token(&pool, &token.token).await?;
+    confirm_subscription(&pool, id).await?;
+    Ok("Subscription verified successfully")
 }

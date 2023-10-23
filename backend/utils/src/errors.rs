@@ -5,7 +5,7 @@ use axum::Json;
 use serde_json::json;
 use std::error::Error;
 
-#[derive(serde::Deserialize, Default)]
+#[derive(serde::Deserialize, Default, Debug)]
 pub struct ErrorPayload {
     level: String,
     message: String,
@@ -21,6 +21,17 @@ impl ErrorPayload {
         }
     }
 }
+
+impl std::fmt::Display for ErrorPayload {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} ({} error of {} level)", self.message, self.status, self.level
+        )
+    }
+}
+
+impl Error for ErrorPayload {}
 
 impl From<String> for ErrorPayload {
     fn from(item: String) -> Self {
