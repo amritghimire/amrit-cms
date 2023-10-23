@@ -1,13 +1,13 @@
 use crate::configuration::{EmailMode, EmailSettings, TlsMode};
+use lettre::address::AddressError;
 use lettre::message::header::ContentType;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::transport::smtp::client::Tls;
+use lettre::transport::smtp::Error;
 use lettre::{Message, SmtpTransport, Transport};
 use secrecy::ExposeSecret;
 use std::sync::mpsc;
 use std::sync::mpsc::SyncSender;
-use lettre::address::AddressError;
-use lettre::transport::smtp::Error;
 
 #[derive(Debug)]
 pub struct EmailError {
@@ -16,10 +16,7 @@ pub struct EmailError {
 
 impl std::fmt::Display for EmailError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Failed to send an email {}.", self.message
-        )
+        write!(f, "Failed to send an email {}.", self.message)
     }
 }
 
@@ -28,7 +25,7 @@ impl std::error::Error for EmailError {}
 impl From<AddressError> for EmailError {
     fn from(value: AddressError) -> Self {
         Self {
-            message: value.to_string()
+            message: value.to_string(),
         }
     }
 }
@@ -36,16 +33,15 @@ impl From<AddressError> for EmailError {
 impl From<lettre::error::Error> for EmailError {
     fn from(value: lettre::error::Error) -> Self {
         Self {
-            message: value.to_string()
+            message: value.to_string(),
         }
     }
 }
 
-
 impl From<Error> for EmailError {
     fn from(value: Error) -> Self {
         Self {
-            message: value.to_string()
+            message: value.to_string(),
         }
     }
 }

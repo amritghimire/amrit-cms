@@ -1,5 +1,9 @@
+use crate::errors::confirmation::{
+    ConfirmationError, ConfirmationFailedError, GetSubscriberError, SubscriptionNotFoundError,
+};
+use crate::errors::subscribe::SubscribeError;
 use crate::extractor::SubscriptionPayload;
-use axum::response::{IntoResponse};
+use axum::response::IntoResponse;
 use axum::Json;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
@@ -7,8 +11,6 @@ use serde_json::json;
 use sqlx::{PgPool, Postgres, Transaction};
 use utils::state::AppState;
 use uuid::Uuid;
-use crate::errors::confirmation::{ConfirmationError, ConfirmationFailedError, GetSubscriberError, SubscriptionNotFoundError};
-use crate::errors::subscribe::SubscribeError;
 
 pub fn get_link(s: &str) -> String {
     let links: Vec<_> = linkify::LinkFinder::new()
@@ -82,14 +84,18 @@ pub async fn store_token(
 }
 
 #[tracing::instrument(name = "Store token in database", skip(pool))]
-pub async fn confirm_subscription(pool: &PgPool, subscriber_id: Uuid) -> Result<(), ConfirmationError> {
+pub async fn confirm_subscription(
+    pool: &PgPool,
+    subscriber_id: Uuid,
+) -> Result<(), ConfirmationError> {
     sqlx::query!(
         r#"UPDATE subscriptions SET status = 'confirmed' WHERE id = $1
         "#,
         subscriber_id
     )
     .execute(pool)
-    .await.map_err(ConfirmationFailedError::from)?;
+    .await
+    .map_err(ConfirmationFailedError::from)?;
     Ok(())
 }
 
@@ -104,8 +110,11 @@ pub async fn get_subscriber_id_from_token(
         subscription_token,
     )
     .fetch_optional(pool)
-    .await.map_err(GetSubscriberError::from)?;
-    let v = result.map(|r| r.subscription_id).ok_or(SubscriptionNotFoundError {})?;
+    .await
+    .map_err(GetSubscriberError::from)?;
+    let v = result
+        .map(|r| r.subscription_id)
+        .ok_or(SubscriptionNotFoundError {})?;
     Ok(v)
 }
 

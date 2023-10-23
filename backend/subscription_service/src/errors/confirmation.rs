@@ -5,12 +5,12 @@ use utils::errors::ErrorPayload;
 pub enum ConfirmationError {
     GetSubscriberError(GetSubscriberError),
     SubscriptionNotFoundError(SubscriptionNotFoundError),
-    ConfirmationFailedError(ConfirmationFailedError)
+    ConfirmationFailedError(ConfirmationFailedError),
 }
 
 #[derive(Debug)]
 pub struct GetSubscriberError {
-    err: Error
+    err: Error,
 }
 
 #[derive(Debug)]
@@ -18,48 +18,36 @@ pub struct SubscriptionNotFoundError {}
 
 #[derive(Debug)]
 pub struct ConfirmationFailedError {
-    err: Error
+    err: Error,
 }
 
 impl std::fmt::Display for ConfirmationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Failed to confirm subscription."
-        )
+        write!(f, "Failed to confirm subscription.")
     }
 }
-
 
 impl std::fmt::Display for GetSubscriberError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Error occurred when trying to verify token"
+            "Error occurred when trying to verify token: {}",
+            self.err
         )
     }
 }
-
 
 impl std::fmt::Display for SubscriptionNotFoundError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Cannot find the token"
-        )
+        write!(f, "Cannot find the token")
     }
 }
-
 
 impl std::fmt::Display for ConfirmationFailedError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Cannot confirm the subscription"
-        )
+        write!(f, "Cannot confirm the subscription: {}", self.err)
     }
 }
-
 
 impl std::error::Error for ConfirmationError {}
 impl std::error::Error for GetSubscriberError {}
@@ -88,20 +76,15 @@ impl From<Error> for GetSubscriberError {
     fn from(err: Error) -> Self {
         tracing::error!("Error occurred {:?}", err);
 
-        Self {
-            err
-        }
+        Self { err }
     }
 }
-
 
 impl From<Error> for ConfirmationFailedError {
     fn from(err: Error) -> Self {
         tracing::error!("Error occurred {:?}", err);
 
-        Self {
-            err
-        }
+        Self { err }
     }
 }
 

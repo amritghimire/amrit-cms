@@ -26,7 +26,8 @@ impl std::fmt::Display for ErrorPayload {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{} ({} error of {} level)", self.message, self.status, self.level
+            "{} ({} error of {} level)",
+            self.message, self.status, self.level
         )
     }
 }
