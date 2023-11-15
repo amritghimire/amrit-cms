@@ -36,7 +36,7 @@ pub async fn subscribe(
 ) -> Result<impl IntoResponse, ErrorPayload> {
     let pool = &state.connection;
     tracing::info!("Adding a new subscription");
-    let mut transaction = pool.begin().await.map_err(SubscribeError::DatabaseError)?;
+    let mut transaction = pool.begin().await.map_err(SubscribeError::PoolError)?;
 
     let subscriber_id = helper::insert_subscriber(&mut transaction, &payload).await?;
     let subscription_token = generate_subscription_token();
@@ -44,7 +44,7 @@ pub async fn subscribe(
     transaction
         .commit()
         .await
-        .map_err(SubscribeError::DatabaseError)?;
+        .map_err(SubscribeError::TransactionCommitError)?;
     let res = helper::send_confirmation_link(&state, payload, subscription_token)?;
     Ok(res)
 }

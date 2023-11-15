@@ -22,6 +22,7 @@ claims = "0.7.1"
 url = "2.4.1"
 linkify = "0.10.0"
 rand = { version = "0.8.5", features = ["std_rng"] }
+thiserror = "1.0.50"
 
 [dependencies.sqlx]
 version = "0.6.2"

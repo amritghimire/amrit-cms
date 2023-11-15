@@ -2,8 +2,27 @@ use axum::extract::rejection::JsonRejection;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
+use phf::phf_map;
 use serde_json::json;
 use std::error::Error;
+
+static DATABASE_ERRORS: phf::Map<&'static str, (&'static str, u16)> = phf_map! {
+    "duplicate key value violates unique constraint \"subscriptions_email_key\"" => ("Email already subscribed", 400),
+};
+
+pub trait ErrorReport {
+    fn level(&self) -> &'static str {
+        "error"
+    }
+
+    fn message(&self) -> String {
+        "Unexpected error occurred".to_string()
+    }
+
+    fn status(&self) -> u16 {
+        400
+    }
+}
 
 #[derive(serde::Deserialize, Default, Debug)]
 pub struct ErrorPayload {
@@ -18,6 +37,24 @@ impl ErrorPayload {
             message: message.to_string(),
             level: level.unwrap_or("error").to_string(),
             status: status.unwrap_or(400),
+        }
+    }
+
+    pub fn from_error(error: impl ErrorReport) -> Self {
+        let mut message = error.message();
+        let mut status = error.status();
+        for (key, value) in DATABASE_ERRORS.into_iter() {
+            if message.contains(key) {
+                message = value.0.to_string();
+                status = value.1;
+                break;
+            }
+        }
+
+        Self {
+            message: message.to_string(),
+            level: error.level().to_string(),
+            status,
         }
     }
 }

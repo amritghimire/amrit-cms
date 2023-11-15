@@ -1,56 +1,44 @@
 use utils::email::EmailError;
-use utils::errors::ErrorPayload;
+use utils::errors::{ErrorPayload, ErrorReport};
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum SubscribeError {
-    DatabaseError(sqlx::Error),
-    ConfirmationEmailError(EmailError),
+    #[error("Failed to acquire a Postgres connection from the pool")]
+    PoolError(#[source] sqlx::Error),
+    #[error("Failed to add subscriber: {0}")]
+    InsertSubscribeError(#[source] sqlx::Error),
+    #[error("Failed to store token: {0}")]
+    StoreTokenError(#[source] sqlx::Error),
+    #[error("Failed to send confirmation email: {0}")]
+    ConfirmationEmailError(#[source] EmailError),
+    #[error("Failed to commit transaction: {0}")]
+    TransactionCommitError(#[source] sqlx::Error),
 }
 
-impl std::fmt::Display for SubscribeError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Failed to create a new subscriber.")
+impl ErrorReport for SubscribeError {
+    fn message(&self) -> String {
+        match self {
+            SubscribeError::PoolError(e) => e.to_string(),
+            SubscribeError::TransactionCommitError(e) => e.to_string(),
+            SubscribeError::InsertSubscribeError(e) => e.to_string(),
+            SubscribeError::StoreTokenError(e) => e.to_string(),
+            SubscribeError::ConfirmationEmailError(e) => e.to_string(),
+        }
+    }
+
+    fn status(&self) -> u16 {
+        match self {
+            SubscribeError::PoolError(_) => 500,
+            SubscribeError::TransactionCommitError(_) => 500,
+            SubscribeError::InsertSubscribeError(_) => 500,
+            SubscribeError::StoreTokenError(_) => 500,
+            SubscribeError::ConfirmationEmailError(_) => 500,
+        }
     }
 }
-
-impl From<sqlx::Error> for SubscribeError {
-    fn from(value: sqlx::Error) -> Self {
-        tracing::error!("Error occurred {:?}", value);
-        Self::DatabaseError(value)
-    }
-}
-
-impl From<EmailError> for SubscribeError {
-    fn from(value: EmailError) -> Self {
-        Self::ConfirmationEmailError(value)
-    }
-}
-
-impl std::error::Error for SubscribeError {}
 
 impl From<SubscribeError> for ErrorPayload {
     fn from(value: SubscribeError) -> Self {
-        match value {
-            SubscribeError::DatabaseError(err) => {
-                if let Some(e) = err.into_database_error() {
-                    let message: &str = e.message();
-                    if message.contains("subscriptions_email_key")
-                        && message.contains("duplicate key value")
-                    {
-                        tracing::info!("Email already exists");
-                        return ErrorPayload::new(
-                            "Email already subscribed",
-                            Some("error"),
-                            Some(400),
-                        );
-                    }
-                }
-
-                ErrorPayload::new("Unable to add to subscription", Some("error"), Some(500))
-            }
-            SubscribeError::ConfirmationEmailError(err) => {
-                ErrorPayload::new(&err.message, Some("error"), Some(400))
-            }
-        }
+        ErrorPayload::from_error(value)
     }
 }

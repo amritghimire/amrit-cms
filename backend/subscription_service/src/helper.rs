@@ -38,7 +38,8 @@ pub async fn insert_subscriber(
         time::OffsetDateTime::now_utc()
     )
     .execute(transaction)
-    .await?;
+    .await
+    .map_err(SubscribeError::InsertSubscribeError)?;
 
     Ok(subscriber_id)
 }
@@ -54,14 +55,19 @@ pub fn send_confirmation_link(
         state.settings.application.full_url(),
         token
     );
-    state.email_client.to_owned().unwrap().send_email(
-        payload.email,
-        "Welcome to our newsletter!".to_string(),
-        format!(
-            "Welcome to our newsletter. Please visit {} to confirm your subscription",
-            { confirmation_link }
-        ),
-    )?;
+    state
+        .email_client
+        .to_owned()
+        .unwrap()
+        .send_email(
+            payload.email,
+            "Welcome to our newsletter!".to_string(),
+            format!(
+                "Welcome to our newsletter. Please visit {} to confirm your subscription",
+                { confirmation_link }
+            ),
+        )
+        .map_err(SubscribeError::ConfirmationEmailError)?;
     Ok(Json(json!({"ok": 1})))
 }
 
@@ -79,7 +85,9 @@ pub async fn store_token(
         subscriber_id
     )
     .execute(transaction)
-    .await?;
+    .await
+    .map_err(SubscribeError::StoreTokenError)?;
+
     Ok(())
 }
 

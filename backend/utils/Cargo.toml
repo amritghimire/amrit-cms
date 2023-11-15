@@ -17,6 +17,7 @@ secrecy = { version = "0.8.0", features = ["serde"] }
 lettre = { version = "0.10.3", features = ["tracing"] }
 anyhow = "1.0.69"
 mime = "0.3.16"
+phf = { version = "0.11.2", features = ["macros"] }
 
 
 [dependencies.sqlx]
