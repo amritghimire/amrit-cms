@@ -17,23 +17,11 @@ pub enum SubscribeError {
 
 impl ErrorReport for SubscribeError {
     fn message(&self) -> String {
-        match self {
-            SubscribeError::PoolError(e) => e.to_string(),
-            SubscribeError::TransactionCommitError(e) => e.to_string(),
-            SubscribeError::InsertSubscribeError(e) => e.to_string(),
-            SubscribeError::StoreTokenError(e) => e.to_string(),
-            SubscribeError::ConfirmationEmailError(e) => e.to_string(),
-        }
+        self.to_string()
     }
 
     fn status(&self) -> u16 {
-        match self {
-            SubscribeError::PoolError(_) => 500,
-            SubscribeError::TransactionCommitError(_) => 500,
-            SubscribeError::InsertSubscribeError(_) => 500,
-            SubscribeError::StoreTokenError(_) => 500,
-            SubscribeError::ConfirmationEmailError(_) => 500,
-        }
+        500
     }
 }
 

@@ -1,6 +1,4 @@
-use crate::errors::confirmation::{
-    ConfirmationError, ConfirmationFailedError, GetSubscriberError, SubscriptionNotFoundError,
-};
+use crate::errors::confirmation::ConfirmationError;
 use crate::errors::subscribe::SubscribeError;
 use crate::extractor::SubscriptionPayload;
 use axum::response::IntoResponse;
@@ -103,7 +101,7 @@ pub async fn confirm_subscription(
     )
     .execute(pool)
     .await
-    .map_err(ConfirmationFailedError::from)?;
+    .map_err(ConfirmationError::ConfirmationFailedError)?;
     Ok(())
 }
 
@@ -119,10 +117,10 @@ pub async fn get_subscriber_id_from_token(
     )
     .fetch_optional(pool)
     .await
-    .map_err(GetSubscriberError::from)?;
+    .map_err(ConfirmationError::GetSubscriberError)?;
     let v = result
         .map(|r| r.subscription_id)
-        .ok_or(SubscriptionNotFoundError {})?;
+        .ok_or(ConfirmationError::SubscriptionNotFoundError {})?;
     Ok(v)
 }
 
