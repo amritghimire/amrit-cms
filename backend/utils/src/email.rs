@@ -159,7 +159,7 @@ impl EmailTrait for TerminalClient {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct EmailObject {
     pub sender: String,
     pub to: String,

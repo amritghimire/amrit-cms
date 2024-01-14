@@ -23,7 +23,6 @@ impl ErrorReport for ConfirmationError {
     }
 }
 
-
 impl From<ConfirmationError> for ErrorPayload {
     fn from(value: ConfirmationError) -> Self {
         ErrorPayload::from_error(value)
