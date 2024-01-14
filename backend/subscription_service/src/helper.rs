@@ -7,6 +7,7 @@ use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use serde_json::json;
 use sqlx::{PgPool, Postgres, Transaction};
+
 use utils::state::AppState;
 use uuid::Uuid;
 
