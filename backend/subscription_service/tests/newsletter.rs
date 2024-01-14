@@ -1,5 +1,4 @@
 use axum::http::StatusCode;
-use axum::response::Response;
 use axum::{http, Router};
 use claims::{assert_err, assert_ok};
 use fake::faker::internet::en::SafeEmail;
@@ -11,7 +10,6 @@ use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
 use subscription_service::router::create_router;
 use tower::ServiceExt;
-use utils::configuration::{RunMode, Settings};
 use utils::email::EmailObject;
 use utils::test;
 

@@ -58,3 +58,8 @@ pub async fn confirm(
     confirm_subscription(&pool, id).await?;
     Ok("Subscription verified successfully")
 }
+
+#[tracing::instrument(name = "Publish newsletter")]
+pub async fn publish_newsletter() -> Result<impl IntoResponse, ErrorPayload> {
+    Ok("Newsletter")
+}
