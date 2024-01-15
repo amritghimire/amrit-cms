@@ -24,7 +24,7 @@ async fn send_email_saved_in_memory() {
             mail_subject.clone(),
             mail_body.clone(),
             mail_html,
-        )
+        ).await
         .expect("Unable to send email");
 
     let email = rx.recv().unwrap();

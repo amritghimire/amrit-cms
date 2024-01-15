@@ -4,10 +4,12 @@ use lettre::message::MultiPart;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::transport::smtp::client::Tls;
 use lettre::transport::smtp::Error;
-use lettre::{Message, SmtpTransport, Transport};
+use lettre::{Message, AsyncSmtpTransport, Tokio1Executor, AsyncTransport};
 use secrecy::ExposeSecret;
 use std::sync::mpsc;
 use std::sync::mpsc::SyncSender;
+use async_trait::async_trait;
+
 
 #[derive(Debug)]
 pub struct EmailError {
@@ -46,8 +48,10 @@ impl From<Error> for EmailError {
     }
 }
 
+
+#[async_trait]
 pub trait EmailTrait {
-    fn send_email(
+    async fn send_email(
         &mut self,
         to: String,
         subject: String,
@@ -67,7 +71,7 @@ pub enum EmailClient {
 #[derive(Clone)]
 pub struct SmtpClient {
     sender: String,
-    transport: SmtpTransport,
+    transport: AsyncSmtpTransport<Tokio1Executor>,
 }
 
 impl SmtpClient {
@@ -80,7 +84,7 @@ impl SmtpClient {
         }
     }
 
-    fn get_transport(settings: &EmailSettings) -> SmtpTransport {
+    fn get_transport(settings: &EmailSettings) -> AsyncSmtpTransport<Tokio1Executor> {
         let creds = Credentials::new(
             settings
                 .username
@@ -102,17 +106,17 @@ impl SmtpClient {
         };
 
         match settings.tls.as_ref().unwrap_or(&TlsMode::Local) {
-            TlsMode::Local => SmtpTransport::builder_dangerous(settings.relay.as_ref().unwrap())
+            TlsMode::Local => AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(settings.relay.as_ref().unwrap())
                 .tls(Tls::None)
                 .port(settings.port.unwrap_or(port))
                 .timeout(Some(std::time::Duration::from_secs(10)))
                 .build(),
-            TlsMode::Tls => SmtpTransport::relay(settings.relay.as_ref().unwrap())
+            TlsMode::Tls => AsyncSmtpTransport::<Tokio1Executor>::relay(settings.relay.as_ref().unwrap())
                 .unwrap()
                 .credentials(creds)
                 .port(settings.port.unwrap_or(port))
                 .build(),
-            TlsMode::StartTls => SmtpTransport::starttls_relay(settings.relay.as_ref().unwrap())
+            TlsMode::StartTls => AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(settings.relay.as_ref().unwrap())
                 .unwrap()
                 .credentials(creds)
                 .port(settings.port.unwrap_or(port))
@@ -121,8 +125,9 @@ impl SmtpClient {
     }
 }
 
+#[async_trait]
 impl EmailTrait for SmtpClient {
-    fn send_email(
+    async fn send_email(
         &mut self,
         to: String,
         subject: String,
@@ -136,7 +141,7 @@ impl EmailTrait for SmtpClient {
             .to(to.parse()?)
             .subject(subject)
             .multipart(email_body)?;
-        self.transport.clone().send(&email)?;
+        self.transport.send(email).await?;
         Ok(())
     }
 
@@ -157,8 +162,9 @@ impl TerminalClient {
     }
 }
 
+#[async_trait]
 impl EmailTrait for TerminalClient {
-    fn send_email(
+    async fn send_email(
         &mut self,
         to: String,
         subject: String,
@@ -212,8 +218,9 @@ impl MessagePassingClient {
     }
 }
 
+#[async_trait]
 impl EmailTrait for MessagePassingClient {
-    fn send_email(
+    async fn send_email(
         &mut self,
         to: String,
         subject: String,

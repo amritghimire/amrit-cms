@@ -75,7 +75,7 @@ pub fn send_confirmation_link(
                 { confirmation_link.clone() },
                 { confirmation_link }
             ),
-        )
+        ).await
         .map_err(SubscribeError::ConfirmationEmailError)?;
     Ok(Json(json!({"ok": 1})))
 }
