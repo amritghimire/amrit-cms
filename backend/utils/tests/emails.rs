@@ -7,6 +7,7 @@ async fn send_email_saved_in_memory() {
     let recipient_mail = "mail@example.com".to_string();
     let mail_subject = "New subject".to_string();
     let mail_body = "Body of email".to_string();
+    let mail_html = "Body of email in <b>HTML</b>".to_string();
 
     let (tx, rx) = mpsc::sync_channel(2);
     let settings = Settings::get_config(RunMode::Test).expect("Unable to fetch test config");
@@ -22,6 +23,7 @@ async fn send_email_saved_in_memory() {
             recipient_mail.clone(),
             mail_subject.clone(),
             mail_body.clone(),
+            mail_html,
         )
         .expect("Unable to send email");
 
@@ -30,5 +32,5 @@ async fn send_email_saved_in_memory() {
     assert_eq!(email.sender, settings.email.sender);
     assert_eq!(email.to, recipient_mail);
     assert_eq!(email.subject, mail_subject);
-    assert_eq!(email.body, mail_body);
+    assert_eq!(email.plain, mail_body);
 }

@@ -68,7 +68,7 @@ async fn subscribe_valid_form_email_sent(pool: PgPool) {
     assert_eq!(email_object.sender, settings.email.sender);
     assert_eq!(email_object.to, email);
     assert_eq!(email_object.subject, "Welcome to our newsletter!");
-    let raw_link = subscription_service::helper::get_link(&email_object.body);
+    let raw_link = subscription_service::helper::get_link(&email_object.plain);
     let confirmation_link = Url::parse(&raw_link).unwrap();
     let application_link = Url::parse(&settings.application.full_url()).unwrap();
     assert_eq!(

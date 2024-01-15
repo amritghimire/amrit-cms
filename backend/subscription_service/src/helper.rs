@@ -63,6 +63,16 @@ pub fn send_confirmation_link(
             "Welcome to our newsletter!".to_string(),
             format!(
                 "Welcome to our newsletter. Please visit {} to confirm your subscription",
+                { confirmation_link.clone() }
+            ),
+            format!(
+                "<b>Welcome to our newsletter.\
+                 Please click <a href='{}' target='_blank'>here </a>\
+                  or copy the link below to confirm your subscription.<br>\
+                 \
+                 {}
+                 ",
+                { confirmation_link.clone() },
                 { confirmation_link }
             ),
         )

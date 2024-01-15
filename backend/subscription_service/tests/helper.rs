@@ -34,7 +34,7 @@ pub async fn get_confirmation_link(rx: &Receiver<EmailObject>, app: &Router) -> 
     let email_object = rx
         .try_recv()
         .expect("Email not sent during the subscription");
-    get_link(&email_object.body)
+    get_link(&email_object.plain)
 }
 
 pub async fn create_confirmed_subscriber(rx: &Receiver<EmailObject>, app: &Router) {

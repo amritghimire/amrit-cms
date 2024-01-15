@@ -1,6 +1,6 @@
 use crate::configuration::{EmailMode, EmailSettings, TlsMode};
 use lettre::address::AddressError;
-use lettre::message::header::ContentType;
+use lettre::message::MultiPart;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::transport::smtp::client::Tls;
 use lettre::transport::smtp::Error;
@@ -47,7 +47,13 @@ impl From<Error> for EmailError {
 }
 
 pub trait EmailTrait {
-    fn send_email(&mut self, to: String, subject: String, body: String) -> Result<(), EmailError>;
+    fn send_email(
+        &mut self,
+        to: String,
+        subject: String,
+        plain: String,
+        html: String,
+    ) -> Result<(), EmailError>;
     fn get_sender(&self) -> &str;
 }
 
@@ -116,14 +122,20 @@ impl SmtpClient {
 }
 
 impl EmailTrait for SmtpClient {
-    fn send_email(&mut self, to: String, subject: String, body: String) -> Result<(), EmailError> {
+    fn send_email(
+        &mut self,
+        to: String,
+        subject: String,
+        plain: String,
+        html: String,
+    ) -> Result<(), EmailError> {
+        let email_body = MultiPart::alternative_plain_html(plain, html);
         let email = Message::builder()
             .from(self.sender.parse()?)
             .reply_to(self.sender.parse()?)
             .to(to.parse()?)
             .subject(subject)
-            .header(ContentType::TEXT_PLAIN)
-            .body(body)?;
+            .multipart(email_body)?;
         self.transport.clone().send(&email)?;
         Ok(())
     }
@@ -146,11 +158,19 @@ impl TerminalClient {
 }
 
 impl EmailTrait for TerminalClient {
-    fn send_email(&mut self, to: String, subject: String, body: String) -> Result<(), EmailError> {
+    fn send_email(
+        &mut self,
+        to: String,
+        subject: String,
+        plain: String,
+        html: String,
+    ) -> Result<(), EmailError> {
         println!("From: {}", self.sender);
         println!("To: {to}");
         println!("Subject: {subject}\n\n");
-        println!("{body}");
+        println!("{plain}");
+        println!("----------");
+        println!("{html}");
         Ok(())
     }
 
@@ -164,7 +184,8 @@ pub struct EmailObject {
     pub sender: String,
     pub to: String,
     pub subject: String,
-    pub body: String,
+    pub plain: String,
+    pub html: String,
 }
 
 #[derive(Clone)]
@@ -192,13 +213,20 @@ impl MessagePassingClient {
 }
 
 impl EmailTrait for MessagePassingClient {
-    fn send_email(&mut self, to: String, subject: String, body: String) -> Result<(), EmailError> {
+    fn send_email(
+        &mut self,
+        to: String,
+        subject: String,
+        plain: String,
+        html: String,
+    ) -> Result<(), EmailError> {
         self.tx
             .send(EmailObject {
                 sender: self.sender.clone(),
                 to,
                 subject,
-                body,
+                plain,
+                html,
             })
             .unwrap();
         Ok(())
