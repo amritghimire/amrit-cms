@@ -15,9 +15,9 @@ pub struct SubscriptionPayload {
 
 #[derive(serde::Serialize, serde::Deserialize, Validate)]
 pub struct NewsletterContent {
-    #[validate(length(min = 1, message = "Can not be empty"))]
+    #[validate(length(min = 10, message = "Can not be empty"))]
     pub plain: String,
-    #[validate(length(min = 1, message = "Can not be empty"))]
+    #[validate(length(min = 10, message = "Can not be empty"))]
     pub html: String,
 }
 
@@ -25,7 +25,14 @@ pub struct NewsletterContent {
 pub struct NewsletterPayload {
     #[validate(length(min = 1, message = "Can not be empty"))]
     pub title: String,
+
     pub content: NewsletterContent,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct ConfirmedSubscriber {
+    pub name: String,
+    pub email: String,
 }
 
 fn validate_forbidden_chars(value: &str) -> Result<(), ValidationError> {

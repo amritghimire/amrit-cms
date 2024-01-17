@@ -1,10 +1,11 @@
 use crate::errors::confirmation::ConfirmationError;
 use crate::errors::subscribe::SubscribeError;
-use crate::extractor::SubscriptionPayload;
+use crate::extractor::{ConfirmedSubscriber, SubscriptionPayload};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use sqlx::{PgPool, Postgres, Transaction};
 
+use crate::errors::newsletter::NewsletterError;
 use utils::email::send_email;
 use utils::state::AppState;
 use uuid::Uuid;
@@ -41,7 +42,7 @@ pub async fn insert_subscriber(
     Ok(subscriber_id)
 }
 
-// #[tracing::instrument(name = "Sending confirmation link", skip(state, payload))]
+#[tracing::instrument(name = "Sending confirmation link", skip(state, payload))]
 pub async fn send_confirmation_link(
     state: &AppState,
     payload: SubscriptionPayload,
@@ -78,6 +79,7 @@ pub async fn send_confirmation_link(
     Ok(())
 }
 
+#[tracing::instrument()]
 #[tracing::instrument(name = "Store token in database", skip(transaction))]
 pub async fn store_token(
     transaction: &mut Transaction<'_, Postgres>,
@@ -131,6 +133,20 @@ pub async fn get_subscriber_id_from_token(
         .map(|r| r.subscription_id)
         .ok_or(ConfirmationError::SubscriptionNotFoundError {})?;
     Ok(v)
+}
+
+#[tracing::instrument(name = "get the list of confirmed subscriptions", skip(pool))]
+pub async fn get_confirmed_subscribers(
+    pool: &PgPool,
+) -> Result<Vec<ConfirmedSubscriber>, NewsletterError> {
+    let result = sqlx::query_as!(
+        ConfirmedSubscriber,
+        r#"SELECT email, name from subscriptions where status = 'confirmed'"#
+    )
+    .fetch_all(pool)
+    .await
+    .map_err(NewsletterError::ConfirmedSubscribersError)?;
+    Ok(result)
 }
 
 pub fn generate_subscription_token() -> String {
