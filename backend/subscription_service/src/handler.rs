@@ -28,6 +28,11 @@ impl Default for TokenQuery {
     }
 }
 
+#[tracing::instrument(name = "Starting a subscription",
+skip(state, payload), fields(
+name= %payload.name,
+email= %payload.email
+))]
 pub async fn subscribe(
     State(state): State<AppState>,
     ValidatedForm(payload): ValidatedForm<SubscriptionPayload>,
