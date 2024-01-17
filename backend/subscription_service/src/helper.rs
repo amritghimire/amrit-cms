@@ -1,13 +1,11 @@
 use crate::errors::confirmation::ConfirmationError;
 use crate::errors::subscribe::SubscribeError;
 use crate::extractor::SubscriptionPayload;
-use axum::response::IntoResponse;
-use axum::Json;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
-use serde_json::json;
 use sqlx::{PgPool, Postgres, Transaction};
 
+use utils::email::send_email;
 use utils::state::AppState;
 use uuid::Uuid;
 
@@ -43,41 +41,41 @@ pub async fn insert_subscriber(
     Ok(subscriber_id)
 }
 
-#[tracing::instrument(name = "Sending confirmation link", skip(state, payload))]
-pub fn send_confirmation_link(
+// #[tracing::instrument(name = "Sending confirmation link", skip(state, payload))]
+pub async fn send_confirmation_link(
     state: &AppState,
     payload: SubscriptionPayload,
     token: String,
-) -> Result<impl IntoResponse, SubscribeError> {
+) -> Result<(), SubscribeError> {
     let confirmation_link = format!(
         "{}/subscription/confirm?token={}",
         state.settings.application.full_url(),
         token
     );
-    state
-        .email_client
-        .to_owned()
-        .unwrap()
-        .send_email(
-            payload.email,
-            "Welcome to our newsletter!".to_string(),
-            format!(
-                "Welcome to our newsletter. Please visit {} to confirm your subscription",
-                { confirmation_link.clone() }
-            ),
-            format!(
-                "<b>Welcome to our newsletter.\
+
+    let client = state.email_client.to_owned();
+    let res = send_email(
+        client,
+        payload.email,
+        "Welcome to our newsletter!".to_string(),
+        format!(
+            "Welcome to our newsletter. Please visit {} to confirm your subscription",
+            { confirmation_link.clone() }
+        ),
+        format!(
+            "<b>Welcome to our newsletter.\
                  Please click <a href='{}' target='_blank'>here </a>\
                   or copy the link below to confirm your subscription.<br>\
                  \
                  {}
                  ",
-                { confirmation_link.clone() },
-                { confirmation_link }
-            ),
-        ).await
-        .map_err(SubscribeError::ConfirmationEmailError)?;
-    Ok(Json(json!({"ok": 1})))
+            { confirmation_link.clone() },
+            { confirmation_link }
+        ),
+    )
+    .await;
+    res.map_err(SubscribeError::ConfirmationEmailError)?;
+    Ok(())
 }
 
 #[tracing::instrument(name = "Store token in database", skip(transaction))]

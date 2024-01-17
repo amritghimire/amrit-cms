@@ -1,6 +1,6 @@
 use std::sync::mpsc;
 use utils::configuration::{RunMode, Settings};
-use utils::email::{EmailClient, MessagePassingClient};
+use utils::email::{send_email, EmailClient, MessagePassingClient};
 
 #[sqlx::test]
 async fn send_email_saved_in_memory() {
@@ -17,15 +17,15 @@ async fn send_email_saved_in_memory() {
         tx,
     ));
 
-    email_client
-        .unwrap()
-        .send_email(
-            recipient_mail.clone(),
-            mail_subject.clone(),
-            mail_body.clone(),
-            mail_html,
-        ).await
-        .expect("Unable to send email");
+    send_email(
+        email_client,
+        recipient_mail.clone(),
+        mail_subject.clone(),
+        mail_body.clone(),
+        mail_html,
+    )
+    .await
+    .expect("Unable to send email");
 
     let email = rx.recv().unwrap();
 

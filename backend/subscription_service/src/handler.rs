@@ -1,12 +1,15 @@
 use crate::errors::subscribe::SubscribeError;
-use crate::extractor::SubscriptionPayload;
+use crate::extractor::{NewsletterPayload, SubscriptionPayload};
 use crate::helper;
 use crate::helper::{
     confirm_subscription, generate_subscription_token, get_subscriber_id_from_token, store_token,
 };
 use axum::extract::{Query, State};
 use axum::response::{IntoResponse, Result};
+use axum::Json;
+use axum_macros::debug_handler;
 use serde::Deserialize;
+use serde_json::json;
 use sqlx::PgPool;
 use utils::errors::ErrorPayload;
 use utils::state::AppState;
@@ -25,11 +28,6 @@ impl Default for TokenQuery {
     }
 }
 
-#[tracing::instrument(name="Subscription request",
-skip(state, payload), fields(
-email= %payload.email,
-name= %payload.name
-))]
 pub async fn subscribe(
     State(state): State<AppState>,
     ValidatedForm(payload): ValidatedForm<SubscriptionPayload>,
@@ -45,8 +43,8 @@ pub async fn subscribe(
         .commit()
         .await
         .map_err(SubscribeError::TransactionCommitError)?;
-    let res = helper::send_confirmation_link(&state, payload, subscription_token)?;
-    Ok(res)
+    helper::send_confirmation_link(&state, payload, subscription_token).await?;
+    Ok(Json(json!({"ok": 1})))
 }
 
 #[tracing::instrument(name = "Confirmation request", skip(token, pool))]
@@ -59,7 +57,13 @@ pub async fn confirm(
     Ok("Subscription verified successfully")
 }
 
-#[tracing::instrument(name = "Publish newsletter")]
-pub async fn publish_newsletter() -> Result<impl IntoResponse, ErrorPayload> {
+#[tracing::instrument(name = "Publish newsletter",
+skip(payload), fields(
+title= %payload.title,
+content= %payload.content.plain
+))]
+pub async fn publish_newsletter(
+    ValidatedForm(payload): ValidatedForm<NewsletterPayload>,
+) -> Result<impl IntoResponse, ErrorPayload> {
     Ok("Newsletter")
 }

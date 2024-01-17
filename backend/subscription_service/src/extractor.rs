@@ -13,6 +13,21 @@ pub struct SubscriptionPayload {
     pub email: String,
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Validate)]
+pub struct NewsletterContent {
+    #[validate(length(min = 1, message = "Can not be empty"))]
+    pub plain: String,
+    #[validate(length(min = 1, message = "Can not be empty"))]
+    pub html: String,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Validate)]
+pub struct NewsletterPayload {
+    #[validate(length(min = 1, message = "Can not be empty"))]
+    pub title: String,
+    pub content: NewsletterContent,
+}
+
 fn validate_forbidden_chars(value: &str) -> Result<(), ValidationError> {
     let is_too_long = value.graphemes(true).count() > 256;
     let is_empty = value.trim().is_empty();
