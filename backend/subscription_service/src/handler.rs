@@ -3,7 +3,7 @@ use crate::extractor::{NewsletterPayload, SubscriptionPayload};
 use crate::helper;
 use crate::helper::{
     confirm_subscription, generate_subscription_token, get_confirmed_subscribers,
-    get_subscriber_id_from_token, store_token,
+    get_subscriber_id_from_token, send_newsletter_email, store_token,
 };
 use axum::extract::{Query, State};
 use axum::response::{IntoResponse, Result};
@@ -11,7 +11,6 @@ use axum::Json;
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::PgPool;
-use std::thread;
 use utils::errors::ErrorPayload;
 use utils::state::AppState;
 use utils::validation::ValidatedForm;
@@ -65,14 +64,16 @@ pub async fn confirm(
 }
 
 #[tracing::instrument(name = "Publish newsletter",
-skip(pool, payload), fields(
+skip(state, payload), fields(
 title= %payload.title,
 content= %payload.content.plain
 ))]
 pub async fn publish_newsletter(
-    State(pool): State<PgPool>,
+    State(state): State<AppState>,
     ValidatedForm(payload): ValidatedForm<NewsletterPayload>,
 ) -> Result<impl IntoResponse, ErrorPayload> {
+    let pool = &state.connection;
+
     if payload.content.html.length() == 0 || payload.content.plain.length() == 0 {
         return Err(ErrorPayload::new(
             "any of the content cannot be empty",
@@ -80,18 +81,8 @@ pub async fn publish_newsletter(
             400.into(),
         ));
     }
-    let confirmed_users = get_confirmed_subscribers(&pool).await?;
+    let confirmed_users = get_confirmed_subscribers(pool).await?;
 
-    let mut children = vec![];
-    for user in confirmed_users {
-        children.push(thread::spawn(move || -> bool {
-            println!("Send email to {}", user.email);
-            true
-        }))
-    }
-    let count = children
-        .into_iter()
-        .map(|c| c.join().unwrap_or(false) as u32)
-        .sum::<u32>();
+    let count = send_newsletter_email(&state, payload, confirmed_users).await;
     Ok(format!("Sent email to {} subscribers", count))
 }

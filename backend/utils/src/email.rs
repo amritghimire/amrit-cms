@@ -7,8 +7,10 @@ use lettre::transport::smtp::client::Tls;
 use lettre::transport::smtp::Error;
 use lettre::{AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
 use secrecy::ExposeSecret;
-use std::sync::mpsc;
 use std::sync::mpsc::SyncSender;
+use std::sync::{mpsc, Arc, Mutex};
+use std::thread;
+use std::thread::JoinHandle;
 
 #[derive(Debug)]
 pub struct EmailError {
@@ -61,19 +63,11 @@ pub enum EmailClient {
 #[derive(Clone)]
 pub struct SmtpClient {
     sender: String,
-    settings: EmailSettings,
+    transport: AsyncSmtpTransport<Tokio1Executor>,
 }
 
 impl SmtpClient {
-    pub fn new(config: EmailSettings) -> Self {
-        Self {
-            sender: config.sender.clone(),
-            settings: config,
-        }
-    }
-
-    fn get_transport(&self) -> AsyncSmtpTransport<Tokio1Executor> {
-        let settings = &self.settings;
+    fn get_transport(settings: &EmailSettings) -> AsyncSmtpTransport<Tokio1Executor> {
         let creds = Credentials::new(
             settings
                 .username
@@ -119,22 +113,30 @@ impl SmtpClient {
         }
     }
 
+    pub fn new(config: EmailSettings) -> Self {
+        let transport = SmtpClient::get_transport(&config);
+        Self {
+            sender: config.sender.clone(),
+            transport,
+        }
+    }
+
     async fn send_email(
-        &mut self,
+        &self,
         to: String,
         subject: String,
         plain: String,
         html: String,
     ) -> Result<(), EmailError> {
         let email_body = MultiPart::alternative_plain_html(plain, html);
+
         let email = Message::builder()
             .from(self.sender.parse()?)
             .reply_to(self.sender.parse()?)
             .to(to.parse()?)
             .subject(subject)
             .multipart(email_body)?;
-        let transport = self.get_transport();
-        transport.send(email).await?;
+        self.transport.send(email).await?;
         Ok(())
     }
 }
@@ -157,7 +159,7 @@ impl TerminalClient {
     }
 
     fn send_email(
-        &mut self,
+        &self,
         to: String,
         subject: String,
         plain: String,
@@ -212,7 +214,7 @@ impl MessagePassingClient {
     }
 
     fn send_email(
-        &mut self,
+        &self,
         to: String,
         subject: String,
         plain: String,
@@ -259,15 +261,64 @@ impl EmailClient {
 }
 
 pub async fn send_email(
-    client: EmailClient,
+    client: &EmailClient,
     to: String,
     subject: String,
     plain: String,
     html: String,
 ) -> Result<(), EmailError> {
     match client {
-        EmailClient::SmtpClient(mut c) => c.send_email(to, subject, plain, html).await,
-        EmailClient::TerminalClient(mut c) => c.send_email(to, subject, plain, html),
-        EmailClient::MessagePassingClient(mut c) => c.send_email(to, subject, plain, html),
+        EmailClient::SmtpClient(c) => c.send_email(to, subject, plain, html).await,
+        EmailClient::TerminalClient(c) => c.send_email(to, subject, plain, html),
+        EmailClient::MessagePassingClient(c) => c.send_email(to, subject, plain, html),
+    }
+}
+
+fn get_successful_email_count(spawned_threads: Vec<JoinHandle<Result<(), EmailError>>>) -> u64 {
+    spawned_threads
+        .into_iter()
+        .map(|c| c.join().unwrap().is_ok() as u64)
+        .sum::<u64>()
+}
+
+pub async fn send_emails(client: EmailClient, emails: Vec<EmailObject>) -> u64 {
+    match client {
+        EmailClient::SmtpClient(c) => {
+            let mut spawned_threads = vec![];
+            let client = Arc::new(Mutex::new(c));
+
+            for email in emails {
+                let client = Arc::clone(&client);
+                spawned_threads.push(thread::spawn(move || {
+                    let runtime = tokio::runtime::Runtime::new().unwrap();
+                    let client = client.lock().unwrap();
+
+                    runtime.block_on(async {
+                        client
+                            .send_email(email.to, email.subject, email.plain, email.html)
+                            .await
+                    })
+                }));
+            }
+            get_successful_email_count(spawned_threads)
+        }
+        EmailClient::TerminalClient(c) => {
+            let mut counts = 0;
+            for email in emails {
+                counts += c
+                    .send_email(email.to, email.subject, email.plain, email.html)
+                    .is_ok() as u64;
+            }
+            counts
+        }
+        EmailClient::MessagePassingClient(c) => {
+            let mut counts = 0;
+            for email in emails {
+                counts += c
+                    .send_email(email.to, email.subject, email.plain, email.html)
+                    .is_ok() as u64;
+            }
+            counts
+        }
     }
 }

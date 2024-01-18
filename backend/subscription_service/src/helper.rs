@@ -1,12 +1,12 @@
 use crate::errors::confirmation::ConfirmationError;
 use crate::errors::subscribe::SubscribeError;
-use crate::extractor::{ConfirmedSubscriber, SubscriptionPayload};
+use crate::extractor::{ConfirmedSubscriber, NewsletterPayload, SubscriptionPayload};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use sqlx::{PgPool, Postgres, Transaction};
 
 use crate::errors::newsletter::NewsletterError;
-use utils::email::send_email;
+use utils::email::{send_email, send_emails, EmailObject};
 use utils::state::AppState;
 use uuid::Uuid;
 
@@ -56,7 +56,7 @@ pub async fn send_confirmation_link(
 
     let client = state.email_client.to_owned();
     let res = send_email(
-        client,
+        &client,
         payload.email,
         "Welcome to our newsletter!".to_string(),
         format!(
@@ -147,6 +147,23 @@ pub async fn get_confirmed_subscribers(
     .await
     .map_err(NewsletterError::ConfirmedSubscribersError)?;
     Ok(result)
+}
+
+#[tracing::instrument(
+    name = "send the confirmation email",
+    skip(state, payload, confirmed_users)
+)]
+pub async fn send_newsletter_email(
+    state: &AppState,
+    payload: NewsletterPayload,
+    confirmed_users: Vec<ConfirmedSubscriber>,
+) -> u64 {
+    let emails: Vec<EmailObject> = confirmed_users
+        .iter()
+        .map(|c| c.form_email_object(&payload))
+        .collect();
+    let client = state.email_client.to_owned();
+    send_emails(client, emails).await
 }
 
 pub fn generate_subscription_token() -> String {

@@ -18,6 +18,7 @@ lettre = { version = "0.10.3", features = ["tracing", "tokio1-native-tls", "toki
 anyhow = "1.0.69"
 mime = "0.3.16"
 phf = { version = "0.11.2", features = ["macros"] }
+tokio = "1.25.0"
 
 
 [dependencies.sqlx]

@@ -1,4 +1,5 @@
 use unicode_segmentation::UnicodeSegmentation;
+use utils::email::EmailObject;
 use validator::{Validate, ValidationError};
 
 #[derive(serde::Serialize, serde::Deserialize, Validate)]
@@ -33,6 +34,18 @@ pub struct NewsletterPayload {
 pub struct ConfirmedSubscriber {
     pub name: String,
     pub email: String,
+}
+
+impl ConfirmedSubscriber {
+    pub fn form_email_object(&self, payload: &NewsletterPayload) -> EmailObject {
+        EmailObject {
+            sender: "".to_string(),
+            to: self.email.clone(),
+            subject: payload.title.clone(),
+            plain: payload.content.plain.clone(),
+            html: payload.content.html.clone(),
+        }
+    }
 }
 
 fn validate_forbidden_chars(value: &str) -> Result<(), ValidationError> {

@@ -18,7 +18,7 @@ async fn send_email_saved_in_memory() {
     ));
 
     send_email(
-        email_client,
+        &email_client,
         recipient_mail.clone(),
         mail_subject.clone(),
         mail_body.clone(),

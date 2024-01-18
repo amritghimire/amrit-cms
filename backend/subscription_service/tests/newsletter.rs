@@ -26,7 +26,7 @@ async fn newsletter_are_not_delivered_to_unconfirmed_subscriber(pool: PgPool) {
     assert_err!(rx.try_recv());
     let newsletter_request_body = json!({
         "title": "Newsletter title",
-        "content": "Newsletter body as plain text"
+        "content": {"plain": "Newsletter body as plain text", "html": "Newsletter body as html text"}
     });
 
     let response = app
