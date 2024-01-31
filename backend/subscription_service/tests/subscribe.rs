@@ -8,14 +8,13 @@ use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::sync::mpsc;
 
+use http_body_util::BodyExt;
 use subscription_service::router::create_router;
 use tower::util::ServiceExt;
 use url::Url;
 use utils::configuration::{RunMode, Settings};
 use utils::state::AppState;
-use utils::test;
-use http_body_util::BodyExt; // for `collect`
-
+use utils::test; // for `collect`
 
 #[sqlx::test]
 async fn subscribe_200_for_valid_form_data(pool: PgPool) {
