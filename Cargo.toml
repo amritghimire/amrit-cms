@@ -2,8 +2,10 @@
 members = [
     "common/translations",
     "frontend/frontend_client", "frontend/admin_client", "frontend/yew_components",
-    "backend/api_server", "backend/auth_service", "backend/subscription_service", "backend/utils"
+    "backend/api_server", "backend/auth_service", "backend/subscription_service",
+    "backend/utils", "backend/util_macros"
 ]
+resolver = "2"
 
 [profile.release]
 strip = true  # Automatically strip symbols from the binary.

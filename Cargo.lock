@@ -1796,6 +1796,7 @@ dependencies = [
  "tracing",
  "unicode-segmentation",
  "url",
+ "util_macros",
  "utils",
  "uuid",
  "validator",
@@ -2186,6 +2187,14 @@ dependencies = [
  "form_urlencoded",
  "idna 0.4.0",
  "percent-encoding",
+]
+
+[[package]]
+name = "util_macros"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 2.0.48",
 ]
 
 [[package]]

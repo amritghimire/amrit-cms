@@ -1,6 +1,7 @@
+use util_macros::ErrorPayloadMacro;
 use utils::errors::{ErrorPayload, ErrorReport};
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, ErrorPayloadMacro)]
 pub enum NewsletterError {
     #[error("Failed to acquire a Postgres connection from the pool")]
     PoolError(#[source] sqlx::Error),
@@ -15,11 +16,5 @@ impl ErrorReport for NewsletterError {
 
     fn status(&self) -> u16 {
         500
-    }
-}
-
-impl From<NewsletterError> for ErrorPayload {
-    fn from(value: NewsletterError) -> Self {
-        ErrorPayload::from_error(value)
     }
 }

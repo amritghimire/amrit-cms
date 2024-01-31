@@ -1,6 +1,7 @@
 use utils::errors::{ErrorPayload, ErrorReport};
+use util_macros::ErrorPayloadMacro;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, ErrorPayloadMacro)]
 pub enum ConfirmationError {
     #[error("Error occurred when trying to verify token: :{0}")]
     GetSubscriberError(#[source] sqlx::Error),
@@ -20,11 +21,5 @@ impl ErrorReport for ConfirmationError {
             ConfirmationError::SubscriptionNotFoundError => 401,
             _ => 500,
         }
-    }
-}
-
-impl From<ConfirmationError> for ErrorPayload {
-    fn from(value: ConfirmationError) -> Self {
-        ErrorPayload::from_error(value)
     }
 }
