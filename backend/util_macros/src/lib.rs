@@ -1,7 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
 
-
 #[proc_macro_derive(ErrorPayloadMacro)]
 pub fn error_payload_macro_derive(input: TokenStream) -> TokenStream {
     // Construct a representation of Rust code as a syntax tree

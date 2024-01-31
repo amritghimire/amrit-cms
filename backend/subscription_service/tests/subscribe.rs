@@ -7,12 +7,15 @@ use fake::Fake;
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::sync::mpsc;
+
 use subscription_service::router::create_router;
 use tower::util::ServiceExt;
 use url::Url;
 use utils::configuration::{RunMode, Settings};
 use utils::state::AppState;
 use utils::test;
+use http_body_util::BodyExt; // for `collect`
+
 
 #[sqlx::test]
 async fn subscribe_200_for_valid_form_data(pool: PgPool) {
@@ -93,7 +96,7 @@ async fn subscribe_valid_form_already_subscribed(pool: PgPool) {
 
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 
-    let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+    let body = response.into_body().collect().await.unwrap().to_bytes();
     let body: Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(
         body,

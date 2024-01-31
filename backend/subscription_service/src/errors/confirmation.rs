@@ -1,5 +1,5 @@
-use utils::errors::{ErrorPayload, ErrorReport};
 use util_macros::ErrorPayloadMacro;
+use utils::errors::{ErrorPayload, ErrorReport};
 
 #[derive(Debug, thiserror::Error, ErrorPayloadMacro)]
 pub enum ConfirmationError {

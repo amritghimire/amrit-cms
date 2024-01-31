@@ -1,11 +1,14 @@
 use crate::errors::{serde_json_error_response, ErrorPayload};
 use async_trait::async_trait;
+use axum::extract::{FromRequest, Request};
+
 use axum::extract::rejection::JsonRejection;
-use axum::extract::FromRequest;
-use axum::http::{Request, StatusCode};
+
+use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde::de::DeserializeOwned;
+
 use thiserror::Error;
 use validator::Validate;
 
@@ -13,16 +16,15 @@ use validator::Validate;
 pub struct ValidatedForm<T>(pub T);
 
 #[async_trait]
-impl<T, S, B> FromRequest<S, B> for ValidatedForm<T>
+impl<T, S> FromRequest<S> for ValidatedForm<T>
 where
     T: DeserializeOwned + Validate,
     S: Send + Sync,
-    Json<T>: FromRequest<S, B, Rejection = JsonRejection>,
-    B: Send + 'static,
+    Json<T>: FromRequest<S, Rejection = JsonRejection>,
 {
     type Rejection = ServerError;
 
-    async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
         let Json(value) = Json::<T>::from_request(req, state).await?;
         value.validate()?;
         Ok(ValidatedForm(value))

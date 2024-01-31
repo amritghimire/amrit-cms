@@ -18,6 +18,10 @@ uuid.workspace = true
 utils = {path="../utils"}
 subscription_service = {path="../subscription_service"}
 
+[dev-dependencies]
+hyper-util.workspace=true
+http-body-util.workspace=true
+
 
 [lib]
 path = "src/lib.rs"

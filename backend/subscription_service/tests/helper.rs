@@ -37,8 +37,9 @@ pub async fn get_confirmation_link(rx: &Receiver<EmailObject>, app: &Router) -> 
     get_link(&email_object.plain)
 }
 
+#[allow(dead_code)]
 pub async fn create_confirmed_subscriber(rx: &Receiver<EmailObject>, app: &Router) {
-    let raw_link = get_confirmation_link(rx, &app).await;
+    let raw_link = get_confirmation_link(rx, app).await;
     let token = extract_token(raw_link);
     let url = format!("/confirm?token={}", token);
     let data = json!({});

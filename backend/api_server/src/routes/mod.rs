@@ -15,7 +15,7 @@ pub fn base_routes() -> Router<AppState> {
 pub async fn create_router() -> Router {
     let settings = Settings::new().expect("Failed to read configuration");
     let app_state = AppState::init(settings).await;
-    let svc = ServiceBuilder::new()
+    let _svc = ServiceBuilder::new()
         // make sure to set request ids before the request reaches `TraceLayer`
         .set_x_request_id(MakeRequestUuid)
         // log requests and responses
@@ -35,5 +35,5 @@ pub async fn create_router() -> Router {
         )
         .fallback(handlers::not_found)
         .with_state(app_state)
-        .layer(svc)
+        // .layer(svc)
 }

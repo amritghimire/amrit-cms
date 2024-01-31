@@ -1,7 +1,8 @@
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
-use std::net::{SocketAddr, TcpListener};
+use std::net::{SocketAddr};
 use tower::util::ServiceExt;
+use http_body_util::BodyExt; // for `collect`
 
 use api_server::routes::create_router;
 
@@ -21,26 +22,25 @@ async fn health_check() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+    let body = response.into_body().collect().await.unwrap().to_bytes();
     assert_eq!(&body[..], b"Ok");
 }
 
 // You can also spawn a server and talk to it like any other HTTP server:
 #[tokio::test]
 async fn check_for_server() {
-    let listener = TcpListener::bind("0.0.0.0:0".parse::<SocketAddr>().unwrap()).unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:0".parse::<SocketAddr>().unwrap()).await.unwrap();
+
     let addr = listener.local_addr().unwrap();
     let app = create_router().await;
 
     tokio::spawn(async move {
-        axum::Server::from_tcp(listener)
-            .unwrap()
-            .serve(app.into_make_service())
-            .await
-            .unwrap();
+        axum::serve(listener, app).await.unwrap();
     });
 
-    let client = hyper::Client::new();
+    let client =
+        hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
+            .build_http();
 
     let response = client
         .request(
@@ -52,6 +52,7 @@ async fn check_for_server() {
         .await
         .unwrap();
 
-    let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
     assert_eq!(&body[..], b"Ok");
 }

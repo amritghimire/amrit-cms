@@ -15,5 +15,5 @@ async fn main() {
     Lazy::force(&TRACING);
 
     let app = routes::create_router().await;
-    api_server::run(app, addr).await.unwrap();
+    api_server::run(app, addr).await;
 }
