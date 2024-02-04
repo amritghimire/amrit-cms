@@ -59,11 +59,11 @@ sqlx:
 
 .PHONY: prepare_sqlx
 prepare_sqlx:
-	cargo sqlx prepare --merged -- --lib
+	cargo sqlx prepare --workspace -- --lib
 
 .PHONY: check_sqlx
 check_sqlx:
-	cargo sqlx prepare --check --merged -- --lib
+	cargo sqlx prepare --check --workspace -- --lib
 
 .PHONY: docker
 docker:
