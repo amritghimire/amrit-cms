@@ -1,10 +1,10 @@
 use crate::errors::confirmation::ConfirmationError;
 use crate::errors::subscribe::SubscribeError;
 use crate::extractor::{ConfirmedSubscriber, NewsletterPayload, SubscriptionPayload};
+use chrono::Utc;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use sqlx::{PgConnection, PgPool};
-use chrono::Utc;
 
 use crate::errors::newsletter::NewsletterError;
 use utils::email::{send_email, send_emails, EmailObject};

@@ -42,9 +42,9 @@ pub async fn subscribe(
     tracing::info!("Adding a new subscription");
     let mut transaction = pool.begin().await.map_err(SubscribeError::PoolError)?;
 
-    let subscriber_id = helper::insert_subscriber(&mut *transaction, &payload).await?;
+    let subscriber_id = helper::insert_subscriber(&mut transaction, &payload).await?;
     let subscription_token = generate_subscription_token();
-    store_token(&mut *transaction, subscriber_id, &subscription_token).await?;
+    store_token(&mut transaction, subscriber_id, &subscription_token).await?;
     transaction
         .commit()
         .await
