@@ -3,7 +3,8 @@ use crate::errors::subscribe::SubscribeError;
 use crate::extractor::{ConfirmedSubscriber, NewsletterPayload, SubscriptionPayload};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
-use sqlx::{PgPool, Postgres, Transaction};
+use sqlx::{PgConnection, PgPool};
+use chrono::Utc;
 
 use crate::errors::newsletter::NewsletterError;
 use utils::email::{send_email, send_emails, EmailObject};
@@ -21,7 +22,7 @@ pub fn get_link(s: &str) -> String {
 
 #[tracing::instrument(name = "Inserting subscriber to database", skip(transaction, payload))]
 pub async fn insert_subscriber(
-    transaction: &mut Transaction<'_, Postgres>,
+    transaction: &mut PgConnection,
     payload: &SubscriptionPayload,
 ) -> Result<Uuid, SubscribeError> {
     let subscriber_id = Uuid::new_v4();
@@ -33,7 +34,7 @@ pub async fn insert_subscriber(
         subscriber_id,
         payload.email,
         payload.name,
-        time::OffsetDateTime::now_utc()
+        Utc::now()
     )
     .execute(transaction)
     .await
@@ -82,7 +83,7 @@ pub async fn send_confirmation_link(
 #[tracing::instrument()]
 #[tracing::instrument(name = "Store token in database", skip(transaction))]
 pub async fn store_token(
-    transaction: &mut Transaction<'_, Postgres>,
+    transaction: &mut PgConnection,
     subscriber_id: Uuid,
     subscription_token: &str,
 ) -> Result<(), SubscribeError> {

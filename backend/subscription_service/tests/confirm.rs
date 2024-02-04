@@ -63,7 +63,7 @@ async fn clicking_on_confirmation_link_confirms_a_subscriber(pool: PgPool) {
 
     assert_eq!(response.status(), http::StatusCode::OK);
     let saved = sqlx::query!("SELECT email, name, status FROM subscriptions")
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await
         .expect("Unable to fetch the table");
 

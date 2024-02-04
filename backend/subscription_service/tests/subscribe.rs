@@ -43,7 +43,7 @@ async fn subscribe_valid_form_data_is_inserted(pool: PgPool) {
     send_request(&app, &name, &email).await;
 
     let saved = sqlx::query!("SELECT email, name, status FROM subscriptions")
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await
         .expect("Unable to fetch the table");
 

@@ -14,7 +14,6 @@ tokio.workspace = true
 tracing.workspace = true
 validator.workspace = true
 uuid.workspace = true
-time.workspace = true
 unicode-segmentation.workspace = true
 claims.workspace = true
 url.workspace = true
@@ -24,6 +23,7 @@ thiserror.workspace = true
 axum-macros.workspace = true
 futures.workspace = true
 sqlx.workspace = true
+chrono.workspace = true
 
 utils = {path="../utils"}
 util_macros = {path= "../util_macros" }
