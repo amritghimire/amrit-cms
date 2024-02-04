@@ -6,6 +6,7 @@ use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use sqlx::{PgConnection, PgPool};
 
+
 use crate::errors::newsletter::NewsletterError;
 use utils::email::{send_email, send_emails, EmailObject};
 use utils::state::AppState;

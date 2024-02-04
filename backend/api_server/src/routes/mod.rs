@@ -3,11 +3,11 @@ use crate::handlers;
 use axum::routing::method_routing::get;
 use axum::routing::Router;
 use dioxus::prelude::*;
+use sqlx::PgPool;
 use tower::ServiceBuilder;
 use tower_http::request_id::MakeRequestUuid;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 use tower_http::ServiceBuilderExt;
-use utils::configuration::Settings;
 use utils::state::AppState;
 
 use dioxus_fullstack::prelude::*;
@@ -16,10 +16,9 @@ pub fn base_routes() -> Router<AppState> {
     Router::new().route("/health_check", get(handlers::health_check))
 }
 
-pub async fn create_router() -> Router {
-    let settings = Settings::new().expect("Failed to read configuration");
-    let serve_dir_path = settings.frontend.assets.clone();
-    let app_state = AppState::init(settings).await;
+pub async fn create_router(pool: PgPool) -> Router {
+    let app_state = AppState::from_conn(pool);
+    let serve_dir_path = app_state.settings.frontend.assets.clone();
     let apps = applications(&app_state.connection).await;
 
     let svc = ServiceBuilder::new()
