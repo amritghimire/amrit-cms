@@ -5,6 +5,7 @@ use tokio::net::TcpListener;
 mod handlers;
 pub mod routes;
 pub mod telemetry;
+mod apps;
 
 pub async fn run(app: Router, addr: SocketAddr) {
     tracing::info!("Starting server in http://{}", addr);

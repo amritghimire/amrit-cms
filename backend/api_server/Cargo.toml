@@ -17,6 +17,7 @@ tracing-subscriber.workspace = true
 uuid.workspace = true
 utils = {path="../utils"}
 subscription_service = {path="../subscription_service"}
+sqlx.workspace = true
 
 [dev-dependencies]
 hyper-util.workspace=true
