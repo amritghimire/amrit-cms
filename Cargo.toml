@@ -59,7 +59,16 @@ hyper-util = { version = "0.1.2", features = ["client-legacy", "client"] }
 http-body-util = "0.1.0"
 chrono = { version = "0.4.33", features = ["serde"] }
 sha2 = "0.10.6"
-rustrict = "0.7.21"
+rustrict = "0.7.12"
 argon2 = "0.5.3"
 zxcvbn = "2.2.2"
 regex = "1.7.1"
+
+
+# Shuttle dependencies
+shuttle-runtime = "0.39.0"
+shuttle-axum = "0.39.0"
+shuttle-secrets = "0.39.0"
+shuttle-shared-db = { version = "0.39.0", features = ["postgres", "sqlx"] }
+tokio-util = { version = "0.7.10", features = ["net", "io", "io-util"] }
+

@@ -1,16 +1,17 @@
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use http_body_util::BodyExt;
+use sqlx::PgPool;
 use std::net::SocketAddr;
 use tower::util::ServiceExt; // for `collect`
 
 use api_server::routes::create_router;
 
-#[tokio::test]
-async fn health_check() {
+#[sqlx::test]
+async fn health_check(pool: PgPool) {
     std::env::set_var("RUN_MODE", "test");
 
-    let app = create_router().await;
+    let app = create_router(pool).await;
 
     let response = app
         .oneshot(
@@ -29,8 +30,8 @@ async fn health_check() {
 }
 
 // You can also spawn a server and talk to it like any other HTTP server:
-#[tokio::test]
-async fn check_for_server() {
+#[sqlx::test]
+async fn check_for_server(pool: PgPool) {
     std::env::set_var("RUN_MODE", "test");
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:0".parse::<SocketAddr>().unwrap())
@@ -38,7 +39,7 @@ async fn check_for_server() {
         .unwrap();
 
     let addr = listener.local_addr().unwrap();
-    let app = create_router().await;
+    let app = create_router(pool).await;
 
     tokio::spawn(async move {
         axum::serve(listener, app).await.unwrap();

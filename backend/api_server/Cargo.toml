@@ -20,6 +20,11 @@ util_macros = { path = "../util_macros" }
 subscription_service = { path = "../subscription_service" }
 auth_service = { path = "../auth_service" }
 sqlx.workspace = true
+shuttle-runtime.workspace = true
+shuttle-axum.workspace = true
+shuttle-secrets.workspace = true
+shuttle-shared-db.workspace = true
+tokio-util.workspace = true
 
 # Frontend
 client = { path = "../../frontend/client" }
