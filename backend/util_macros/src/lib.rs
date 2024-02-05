@@ -22,5 +22,3 @@ fn impl_error_payload_macro(ast: &syn::DeriveInput) -> TokenStream {
     };
     gen.into()
 }
-
-

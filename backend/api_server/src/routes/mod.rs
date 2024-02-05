@@ -1,3 +1,4 @@
+use crate::apps::applications;
 use crate::handlers;
 use axum::routing::method_routing::get;
 use axum::routing::Router;
@@ -7,7 +8,6 @@ use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 use tower_http::ServiceBuilderExt;
 use utils::configuration::Settings;
 use utils::state::AppState;
-use crate::apps::applications;
 
 pub fn base_routes() -> Router<AppState> {
     Router::new().route("/health_check", get(handlers::health_check))
@@ -34,7 +34,8 @@ pub async fn create_router() -> Router {
     for app in apps {
         router = app.add_routes(router);
     }
-    router.fallback(handlers::not_found)
+    router
+        .fallback(handlers::not_found)
         .with_state(app_state)
         .layer(svc)
 }

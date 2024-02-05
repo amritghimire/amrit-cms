@@ -5,7 +5,7 @@ use utils::state::AppState;
 use crate::installed_apps;
 use crate::single_app;
 
-installed_apps!{
+installed_apps! {
     ("/subscriptions", subscription_service, "../subscription_service/migrations"),
     ("/auth", auth_service)
 }

@@ -2,11 +2,11 @@ use axum::Router;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 
+mod apps;
 mod handlers;
+pub mod macros;
 pub mod routes;
 pub mod telemetry;
-mod apps;
-pub mod macros;
 
 pub async fn run(app: Router, addr: SocketAddr) {
     tracing::info!("Starting server in http://{}", addr);
