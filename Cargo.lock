@@ -70,6 +70,7 @@ checksum = "224afbd727c3d6e4b90103ece64b8d1b67fbb1973b1046c2281eed3f3803f800"
 name = "api_server"
 version = "0.1.0"
 dependencies = [
+ "auth_service",
  "axum",
  "http-body-util",
  "hyper",
@@ -84,6 +85,7 @@ dependencies = [
  "tracing",
  "tracing-log 0.2.0",
  "tracing-subscriber",
+ "util_macros",
  "utils",
  "uuid",
 ]
@@ -121,6 +123,10 @@ dependencies = [
 [[package]]
 name = "auth_service"
 version = "0.1.0"
+dependencies = [
+ "axum",
+ "utils",
+]
 
 [[package]]
 name = "autocfg"

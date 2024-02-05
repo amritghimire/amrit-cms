@@ -44,8 +44,3 @@ done
 export DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
 sqlx database create
 
-# shellcheck disable=SC2044
-for d in $(find . -name 'migrations' -type d); do
-    sqlx migrate run --source "$d"
-done
-
