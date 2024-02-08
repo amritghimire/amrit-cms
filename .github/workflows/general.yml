@@ -18,9 +18,6 @@ jobs:
           POSTGRES_DB: amrit_cms
         ports:
           - 5432:5432
-    env:
-      SQLX_VERSION: 0.7.3
-      SQLX_FEATURES: "rustls,postgres"
     steps:
       - uses: actions/checkout@v2
       - name: Cache dependencies
@@ -37,31 +34,8 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - name: Cache sqlx-cli
-        uses: actions/cache@v2
-        id: cache-sqlx
-        with:
-          path: |
-            ~/.cargo/bin/sqlx
-          key: ${{ runner.os }}-sqlx-${{ env.SQLX_VERSION }}
-
-      - name: Install sqlx-cli
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: >
-            sqlx-cli
-            --force
-            --version=${{ env.SQLX_VERSION }}
-            --features ${{ env.SQLX_FEATURES }}
-            --no-default-features
-            --locked
-
       - name: Migrate database
-        run: |
-          sudo apt-get install libpq-dev -y
-          SKIP_DOCKER=true ./scripts/init_db.sh
-      - run: SQLX_OFFLINE=true make migrate
+        run: SQLX_OFFLINE=true make migrate
       - run: make test
 
   fmt:
@@ -105,9 +79,6 @@ jobs:
           POSTGRES_DB: amrit_cms
         ports:
           - 5432:5432
-    env:
-      SQLX_VERSION: 0.7.3
-      SQLX_FEATURES: "rustls,postgres"
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
