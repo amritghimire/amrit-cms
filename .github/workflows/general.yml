@@ -61,7 +61,7 @@ jobs:
         run: |
           sudo apt-get install libpq-dev -y
           SKIP_DOCKER=true ./scripts/init_db.sh
-      - run: make migrate
+      - run: SQLX_OFFLINE=true make migrate
       - run: make test
 
   fmt:
@@ -117,5 +117,5 @@ jobs:
           override: true
       - run: cargo install cargo-tarpaulin
       - uses: Swatinem/rust-cache@v1
-      - run: make migrate
+      - run: SQLX_OFFLINE=true make migrate
       - run: make coverage
