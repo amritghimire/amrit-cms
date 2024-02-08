@@ -42,6 +42,10 @@ audit:
 test:
 	DATABASE_URL="$(DATABASE_URL)" cargo test
 
+.PHONY: migrate
+migrate:
+	DATABASE_URL="$(DATABASE_URL)" cargo run -p api_server -- migrate
+
 .PHONY: check_all
 check_all: check clippy check_fmt check_sqlx test
 
