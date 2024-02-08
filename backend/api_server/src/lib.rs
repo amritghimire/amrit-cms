@@ -5,6 +5,7 @@ use tokio::net::TcpListener;
 mod apps;
 mod handlers;
 pub mod macros;
+pub mod migrate;
 pub mod routes;
 pub mod telemetry;
 

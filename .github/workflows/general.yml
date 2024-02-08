@@ -15,12 +15,9 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: postgres
+          POSTGRES_DB: amrit_cms
         ports:
           - 5432:5432
-    env:
-      SQLX_VERSION: 0.7.3
-      SQLX_FEATURES: "rustls,postgres"
     steps:
       - uses: actions/checkout@v2
       - name: Cache dependencies
@@ -37,30 +34,8 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - name: Cache sqlx-cli
-        uses: actions/cache@v2
-        id: cache-sqlx
-        with:
-          path: |
-            ~/.cargo/bin/sqlx
-          key: ${{ runner.os }}-sqlx-${{ env.SQLX_VERSION }}
-
-      - name: Install sqlx-cli
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: >
-            sqlx-cli
-            --force
-            --version=${{ env.SQLX_VERSION }}
-            --features ${{ env.SQLX_FEATURES }}
-            --no-default-features
-            --locked
-
       - name: Migrate database
-        run: |
-          sudo apt-get install libpq-dev -y
-          SKIP_DOCKER=true ./scripts/init_db.sh
+        run: SQLX_OFFLINE=true make migrate
       - run: make test
 
   fmt:
@@ -80,18 +55,6 @@ jobs:
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:12
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: postgres
-        ports:
-          - 5432:5432
-    env:
-      SQLX_VERSION: 0.7.3
-      SQLX_FEATURES: "rustls,postgres"
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -100,34 +63,9 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Cache sqlx-cli
-        uses: actions/cache@v2
-        id: cache-sqlx
-        with:
-          path: |
-            ~/.cargo/bin/sqlx
-          key: ${{ runner.os }}-sqlx-${{ env.SQLX_VERSION }}
-
-      - name: Install sqlx-cli
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: >
-            sqlx-cli
-            --force
-            --version=${{ env.SQLX_VERSION }}
-            --features ${{ env.SQLX_FEATURES }}
-            --no-default-features
-            --locked
-      - name: Create database
-        run: |
-          sudo apt-get install libpq-dev -y
-          SKIP_DOCKER=true ./scripts/init_db.sh
-
       - run: rustup component add clippy
       - uses: Swatinem/rust-cache@v1
-      - run: echo "DATABASE_URL=\"postgres://postgres:password@localhost:5432/postgres\"" > .env
-      - run: make clippy
+      - run:  export SQLX_OFFLINE=true;make clippy
 
   coverage:
     name: Coverage
@@ -138,12 +76,9 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: postgres
+          POSTGRES_DB: amrit_cms
         ports:
           - 5432:5432
-    env:
-      SQLX_VERSION: 0.7.3
-      SQLX_FEATURES: "rustls,postgres"
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -151,30 +86,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - name: Cache sqlx-cli
-        uses: actions/cache@v2
-        id: cache-sqlx
-        with:
-          path: |
-            ~/.cargo/bin/sqlx
-          key: ${{ runner.os }}-sqlx-${{ env.SQLX_VERSION }}
-
-      - name: Install sqlx-cli
-        uses: actions-rs/cargo@v1
-        if: steps.cache-sqlx.outputs.cache-hit == false
-        with:
-          command: install
-          args: >
-            sqlx-cli
-            --force
-            --version=${{ env.SQLX_VERSION }}
-            --features ${{ env.SQLX_FEATURES }}
-            --no-default-features
-            --locked
-      - name: Migrate database
-        run: |
-          sudo apt-get install libpq-dev -y
-          SKIP_DOCKER=true ./scripts/init_db.sh
       - run: cargo install cargo-tarpaulin
       - uses: Swatinem/rust-cache@v1
+      - run: SQLX_OFFLINE=true make migrate
       - run: make coverage
