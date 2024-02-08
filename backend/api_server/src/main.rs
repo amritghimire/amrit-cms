@@ -1,6 +1,6 @@
-use std::env;
 use api_server::routes;
 use once_cell::sync::Lazy;
+use std::env;
 use utils::configuration::Settings;
 use utils::state::AppState;
 
@@ -14,7 +14,7 @@ async fn main() {
     let configuration = Settings::new().expect("Failed to read configuration");
 
     let args: Vec<String> = env::args().collect();
-    if args.contains(&"migrate".to_string()){
+    if args.contains(&"migrate".to_string()) {
         println!("Migrating the database");
         let app_state = AppState::init(configuration).await;
         api_server::migrate::migrate_all_apps(&app_state.connection).await;
