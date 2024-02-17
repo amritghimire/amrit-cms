@@ -7,5 +7,5 @@ use crate::single_app;
 
 installed_apps! {
     ("/subscriptions", subscription_service, "../subscription_service/migrations"),
-    ("/auth", auth_service)
+    ("/auth", auth_service, "../auth_service/migrations")
 }

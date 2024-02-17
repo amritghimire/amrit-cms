@@ -29,11 +29,13 @@ macro_rules! installed_apps {
 #[macro_export]
 macro_rules! single_app {
     (($url:literal, $name:ident, $migrations:literal), $pool:expr, $app_lists:expr) => {
-        sqlx::migrate!($migrations)
-            .run($pool)
-            .await
-            .expect("Migrations failed :(");
-
+        let migrator = {
+            let mut m = sqlx::migrate!($migrations);
+            m.set_ignore_missing(true);
+            // m.set_migrations_table(format!("_sqlx_migrations_{}", stringify!($name)));
+            m
+        };
+        migrator.run($pool).await.expect("Migrations failed :(");
         $app_lists.push(AppConfig {
             url: $url,
             router: $name::router::create_router,
