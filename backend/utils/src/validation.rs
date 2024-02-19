@@ -8,6 +8,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde::de::DeserializeOwned;
+use serde_json::json;
 
 use thiserror::Error;
 use validator::Validate;
@@ -43,14 +44,18 @@ pub enum ServerError {
 impl IntoResponse for ServerError {
     fn into_response(self) -> Response {
         match self {
-            ServerError::ValidationError(_) => {
-                let message = format!("Input validation error: [{}]", self).replace('\n', ", ");
-                (StatusCode::BAD_REQUEST, ErrorPayload::from(message))
+            ServerError::ValidationError(e) => {
+                let error = json!(e.errors());
+                let message = "Failed to validate input".to_string();
+                let mut payload = ErrorPayload::from(message);
+                payload.set_details(error);
+                // let message = format!("Input validation error: [{}]", self).replace('\n', ", ");
+                (StatusCode::BAD_REQUEST, payload)
             }
             ServerError::AxumJsonRejection(err) => {
                 match err {
                     JsonRejection::JsonDataError(err) => {
-                        (StatusCode::BAD_REQUEST, ErrorPayload::from(err.to_string()))
+                        (StatusCode::BAD_REQUEST, ErrorPayload::from(err.body_text()))
                     }
                     JsonRejection::JsonSyntaxError(err) => serde_json_error_response(err),
                     // handle other rejections from the `Json` extractor

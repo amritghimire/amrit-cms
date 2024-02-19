@@ -5,10 +5,9 @@ use fake::Fake;
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::mpsc::Receiver;
-use subscription_service::helper::get_link;
 use tower::ServiceExt;
 use url::Url;
-use utils::email::EmailObject;
+use utils::email::{get_link, EmailObject};
 use utils::test;
 
 pub fn extract_token(raw_link: String) -> String {

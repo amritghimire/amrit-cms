@@ -11,15 +11,6 @@ use utils::email::{send_email, send_emails, EmailObject};
 use utils::state::AppState;
 use uuid::Uuid;
 
-pub fn get_link(s: &str) -> String {
-    let links: Vec<_> = linkify::LinkFinder::new()
-        .links(s)
-        .filter(|l| *l.kind() == linkify::LinkKind::Url)
-        .collect();
-    assert_eq!(links.len(), 1);
-    links[0].as_str().to_owned()
-}
-
 #[tracing::instrument(name = "Inserting subscriber to database", skip(transaction, payload))]
 pub async fn insert_subscriber(
     transaction: &mut PgConnection,

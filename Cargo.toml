@@ -22,8 +22,8 @@ serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.93"
 tokio = { version = "1.25.0", features = ["macros", "rt-multi-thread"] }
 tracing = {version = "0.1.37", features = ["log"] }
-validator = { version = "0.16.0", features = ["validator_derive", "derive"] }
-uuid = { version = "1.3.0", features = ["v4"] }
+validator = { version = "0.16.0", features = ["validator_derive", "derive", "unic"] }
+uuid = { version = "1.3.0", features = ["v4", "serde"] }
 unicode-segmentation = "1.10.1"
 claims = "0.7.1"
 url = "2.4.1"
@@ -41,7 +41,7 @@ sqlx = {version = "0.7.3", default-features = false, features = [
     "migrate",
 ]}
 tower = { version = "0.4.13", features = ["util", "tracing", "tokio"] }
-fake = { version = "2.5.0" }
+fake = { version = "2.9.2", features = ["derive"] }
 quote = { version = "1.0.35", features = [] }
 syn = "2.0.48"
 log = "0.4.17"
@@ -57,3 +57,7 @@ phf = { version = "0.11.2", features = ["macros"] }
 hyper-util = {version = "0.1.2", features = ["client-legacy", "client"]}
 http-body-util = "0.1.0"
 chrono = { version = "0.4.33", features = ["serde"] }
+sha2 = "0.10.6"
+rustrict = "0.7.21"
+argon2 = "0.5.3"
+zxcvbn = "2.2.2"

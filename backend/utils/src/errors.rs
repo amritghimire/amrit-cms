@@ -3,7 +3,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use phf::phf_map;
-use serde_json::json;
+use serde_json::{json, Value};
 use std::error::Error;
 
 static DATABASE_ERRORS: phf::Map<&'static str, (&'static str, u16)> = phf_map! {
@@ -22,6 +22,10 @@ pub trait ErrorReport {
     fn status(&self) -> u16 {
         400
     }
+
+    fn details(&self) -> serde_json::Value {
+        json!({})
+    }
 }
 
 #[derive(serde::Deserialize, Default, Debug)]
@@ -29,6 +33,7 @@ pub struct ErrorPayload {
     level: String,
     message: String,
     status: u16,
+    details: Value,
 }
 
 impl ErrorPayload {
@@ -37,6 +42,7 @@ impl ErrorPayload {
             message: message.to_string(),
             level: level.unwrap_or("error").to_string(),
             status: status.unwrap_or(400),
+            details: json!({}),
         }
     }
 
@@ -55,7 +61,30 @@ impl ErrorPayload {
             message: message.to_string(),
             level: error.level().to_string(),
             status,
+            details: error.details(),
         }
+    }
+
+    pub fn set_details(&mut self, value: Value) {
+        self.details = value;
+    }
+
+    pub fn form_details(key: &str, code: &str, message: &str, value: Option<&str>) -> Value {
+        let mut field_value = json!(
+            {
+                "code": code,
+                "message": message,
+                "params": {}
+            }
+        );
+        if let Some(value) = value {
+            field_value["params"] = json!({
+                "value": value
+            });
+        }
+        json!({
+            key: field_value
+        })
     }
 }
 
@@ -63,8 +92,8 @@ impl std::fmt::Display for ErrorPayload {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{} ({} error of {} level)",
-            self.message, self.status, self.level
+            "{} ({} error of {} level) {}",
+            self.message, self.status, self.level, self.details
         )
     }
 }
@@ -82,7 +111,8 @@ impl IntoResponse for ErrorPayload {
         let response = json!({
             "message": self.message,
             "level": self.level,
-            "status": self.status
+            "status": self.status,
+            "details": self.details
         });
         (
             StatusCode::from_u16(self.status).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),

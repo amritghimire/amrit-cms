@@ -13,8 +13,9 @@ use subscription_service::router::create_router;
 use tower::util::ServiceExt;
 use url::Url;
 use utils::configuration::{RunMode, Settings};
+use utils::email::get_link;
 use utils::state::AppState;
-use utils::test; // for `collect`
+use utils::test;
 
 #[sqlx::test]
 async fn subscribe_200_for_valid_form_data(pool: PgPool) {
@@ -70,7 +71,7 @@ async fn subscribe_valid_form_email_sent(pool: PgPool) {
     assert_eq!(email_object.sender, settings.email.sender);
     assert_eq!(email_object.to, email);
     assert_eq!(email_object.subject, "Welcome to our newsletter!");
-    let raw_link = subscription_service::helper::get_link(&email_object.plain);
+    let raw_link = get_link(&email_object.plain);
     let confirmation_link = Url::parse(&raw_link).unwrap();
     let application_link = Url::parse(&settings.application.full_url()).unwrap();
     assert_eq!(
@@ -99,7 +100,7 @@ async fn subscribe_valid_form_already_subscribed(pool: PgPool) {
     let body: Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(
         body,
-        json!({ "level": "error","message": "Email already subscribed", "status": 400} )
+        json!({"details": {}, "level": "error","message": "Email already subscribed", "status": 400} )
     );
 }
 

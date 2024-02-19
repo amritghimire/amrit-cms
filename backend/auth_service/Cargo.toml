@@ -7,4 +7,24 @@ edition = "2021"
 
 [dependencies]
 utils = {path = "../utils"}
+util_macros = {path = "../util_macros"}
 axum.workspace = true
+sqlx.workspace = true
+chrono.workspace = true
+secrecy.workspace = true
+uuid.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+sha2.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
+validator.workspace = true
+rustrict.workspace = true
+argon2.workspace = true
+zxcvbn.workspace = true
+url.workspace = true
+
+[dev-dependencies]
+fake.workspace = true
+tower.workspace = true
+http-body-util.workspace=true
