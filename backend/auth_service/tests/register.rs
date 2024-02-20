@@ -44,6 +44,7 @@ async fn registration_200_valid_form_data(pool: PgPool) {
     let payload: RegistrationPayload = Faker.fake();
     let data = serde_json::to_value(payload).unwrap();
     let data = replace_password(&data, STRONG_PASSWORD);
+    let data = replace_key(&data, "username", "safe_username");
     let response = send_request(&app, &data).await;
 
     assert_eq!(response.status(), StatusCode::OK);
@@ -59,6 +60,7 @@ async fn registration_valid_form_data_is_inserted(pool: PgPool) {
     let payload: RegistrationPayload = Faker.fake();
     let data = serde_json::to_value(payload.clone()).unwrap();
     let data = replace_password(&data, STRONG_PASSWORD);
+    let data = replace_key(&data, "username", "safe_username");
     let response = send_request(&app, &data).await;
 
     assert_eq!(
@@ -78,7 +80,7 @@ async fn registration_valid_form_data_is_inserted(pool: PgPool) {
 
     assert_eq!(saved.email, payload.email);
     assert_eq!(saved.name, payload.name);
-    assert_eq!(saved.username, payload.username);
+    assert_eq!(saved.username, "safe_username");
     assert_eq!(
         saved.normalized_username,
         User::normalize_username(&saved.username).unwrap()
@@ -110,6 +112,7 @@ async fn registration_sends_confirmation_email(pool: PgPool) {
     let payload: RegistrationPayload = Faker.fake();
     let data = serde_json::to_value(payload.clone()).unwrap();
     let data = replace_password(&data, STRONG_PASSWORD);
+    let data = replace_key(&data, "username", "safe_username");
     send_request(&app, &data).await;
 
     let email_object = rx
@@ -139,6 +142,7 @@ async fn registration_already_exists(pool: PgPool) {
     let payload: RegistrationPayload = Faker.fake();
     let data = serde_json::to_value(payload.clone()).unwrap();
     let data = replace_password(&data, STRONG_PASSWORD);
+    let data = replace_key(&data, "username", "safe_username");
     send_request(&app, &data).await;
 
     // Send with same username
