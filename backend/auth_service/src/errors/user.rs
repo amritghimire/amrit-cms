@@ -14,8 +14,6 @@ pub enum UserError {
     PasswordCheckFailed(#[source] ZxcvbnError),
     #[error("Weak password")]
     WeakPassword,
-    #[error("Confirmation token missing")]
-    ConfirmationTokenMissing,
     #[error("Failed to send confirmation email")]
     ConfirmationEmailError(#[source] EmailError),
 }

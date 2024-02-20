@@ -1,16 +1,21 @@
 use crate::errors::user::UserError;
 use crate::extractor::User;
+use once_cell::sync::Lazy;
+use regex::Regex;
 use rustrict::CensorStr;
 use secrecy::Secret;
 use serde::Deserialize;
 use std::convert::TryFrom;
 use validator::{Validate, ValidationError};
 
+static USERNAME_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[0-9A-Za-z_.]+$").unwrap());
+
 #[derive(Debug, Deserialize, Validate)]
 pub struct RegisterPayload {
     #[validate(
-        length(min = 1, message = "Username cannot be empty"),
+        length(min = 3, message = "Username cannot be empty"),
         non_control_character,
+        regex = "USERNAME_REGEX",
         custom = "validate_profanity"
     )]
     pub username: String,

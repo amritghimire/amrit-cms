@@ -11,15 +11,13 @@ use serde_json::{json, Value};
 use std::sync::mpsc;
 
 use auth_service::router::create_router;
-use http_body_util::BodyExt;
 use tower::util::ServiceExt;
 
-use auth_service::extractor::User;
+use auth_service::extractor::{ConfirmationActionType, User};
 use sqlx::PgPool;
 use url::Url;
 use utils::configuration::{RunMode, Settings};
 use utils::email::get_link;
-use utils::state::AppState;
 use utils::test;
 
 static STRONG_PASSWORD: &str = "r0sebudmaelstrom11/20/91aaaa";
@@ -62,6 +60,7 @@ async fn registration_valid_form_data_is_inserted(pool: PgPool) {
     let data = serde_json::to_value(payload.clone()).unwrap();
     let data = replace_password(&data, STRONG_PASSWORD);
     let response = send_request(&app, &data).await;
+
     assert_eq!(
         response.status(),
         StatusCode::OK,
@@ -87,7 +86,19 @@ async fn registration_valid_form_data_is_inserted(pool: PgPool) {
     assert!(saved.is_active);
     assert!(!saved.is_confirmed);
     assert!(saved.check_password(STRONG_PASSWORD));
-    assert!(!saved.check_password("wrong"))
+    assert!(!saved.check_password("wrong"));
+
+    let confirmation = sqlx::query!("SELECT * from confirmations")
+        .fetch_one(&mut *conn)
+        .await
+        .expect("unable to fetch the confirmation");
+
+    assert_eq!(
+        confirmation.action_type,
+        String::from(ConfirmationActionType::UserVerification)
+    );
+    assert_eq!(confirmation.details, Some(json!({"email": payload.email})));
+    assert_eq!(confirmation.user_id, saved.id);
 }
 
 #[sqlx::test]
@@ -126,59 +137,33 @@ async fn registration_already_exists(pool: PgPool) {
 
     let app = create_router().with_state(state);
     let payload: RegistrationPayload = Faker.fake();
-    let data = serde_json::to_value(payload).unwrap();
+    let data = serde_json::to_value(payload.clone()).unwrap();
     let data = replace_password(&data, STRONG_PASSWORD);
     send_request(&app, &data).await;
 
     // Send with same username
+    let new_email: String = SafeEmail().fake();
+    let data = replace_key(&data, "email", &new_email);
     let response = send_request(&app, &data).await;
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    let body: Value = serde_json::from_slice(&body).unwrap();
-    assert_eq!(
-        body,
-        json!({
-            "details": {
-                "username": {
-                    "code": "username_not_available",
-                    "message": "Username not available",
-                    "params": {}
-                }
-            },
-            "level": "error",
-            "message": "Username not available",
-            "status": 400
-        })
-    );
+    test::assert_response(response, StatusCode::BAD_REQUEST, "Username not available").await;
 
     // Change the username
     let new_username: String = Username().fake();
     let data = replace_key(&data, "username", &new_username);
+    let data = replace_key(&data, "email", &payload.email);
     let response = send_request(&app, &data).await;
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    let body: Value = serde_json::from_slice(&body).unwrap();
-    assert_eq!(
-        body,
-        json!({
-            "details": {
-                "email": {
-                    "code": "email_not_available",
-                    "message": "Email address already used",
-                    "params": {}
-                }
-            },
-            "level": "error",
-            "message": "Email already used",
-            "status": 400
-        })
-    );
+    test::assert_response(
+        response,
+        StatusCode::BAD_REQUEST,
+        "Email already registered",
+    )
+    .await;
 }
 
 #[sqlx::test]
 async fn register_returns_a_400_for_invalid_form_data(pool: PgPool) {
-    let state = AppState::test_state(pool, None);
+    let (tx, _rx) = mpsc::sync_channel(5);
+    let state = test::test_state_for_email(pool, tx);
     let app = create_router().with_state(state);
 
     let payload: RegistrationPayload = Faker.fake();

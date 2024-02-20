@@ -16,6 +16,8 @@ pub enum UserRegistrationError {
     EmailNotAvailable,
     #[error("Insert user failed: {0}")]
     InsertUserFailed(#[source] sqlx::Error),
+    #[error("Insert confirmation failed: {0}")]
+    InsertConfirmationFailed(#[source] sqlx::Error),
     #[error("Password hash empty")]
     PasswordHashEmpty,
     #[error("Failed to commit transaction: {0}")]
@@ -29,6 +31,16 @@ pub enum UsernameCheckError {
     #[error("Unexpected error occurred")]
     Unexpected,
 }
+
+#[derive(Debug, thiserror::Error, ErrorPayloadMacro)]
+pub enum FetchUserError {
+    #[error("Failed to fetch the username: {0}")]
+    UserFetch(#[source] sqlx::Error),
+    #[error("Unexpected error occurred")]
+    Unexpected,
+}
+
+impl ErrorReport for FetchUserError {}
 
 #[derive(Debug, thiserror::Error)]
 pub enum EmailCheckError {
@@ -53,6 +65,7 @@ impl ErrorReport for UserRegistrationError {
             UserRegistrationError::TransactionCommitError(_) => 500,
             UserRegistrationError::EmailCheckError(_) => 400,
             UserRegistrationError::EmailNotAvailable => 400,
+            UserRegistrationError::InsertConfirmationFailed(_) => 500,
         }
     }
 

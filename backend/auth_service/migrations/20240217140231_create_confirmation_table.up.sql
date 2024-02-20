@@ -5,10 +5,10 @@ create table confirmations
         constraint confirmations_pk
             primary key,
     details         json default '{}'::json,
-    verifier_hash   varchar(20) not null,
+    verifier_hash   varchar(256) not null,
     user_id         integer     not null
         constraint confirmations_users_id_fk
-            references users,
+            references users on delete cascade ,
     created_at      timestamptz not null,
     expires_at      timestamptz not null,
     action_type     varchar(25) not null

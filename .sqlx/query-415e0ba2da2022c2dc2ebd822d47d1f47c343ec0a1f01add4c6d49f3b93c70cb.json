@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        DELETE FROM confirmations where confirmation_id = $1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "415e0ba2da2022c2dc2ebd822d47d1f47c343ec0a1f01add4c6d49f3b93c70cb"
+}

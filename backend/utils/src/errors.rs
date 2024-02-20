@@ -8,6 +8,9 @@ use std::error::Error;
 
 static DATABASE_ERRORS: phf::Map<&'static str, (&'static str, u16)> = phf_map! {
     "duplicate key value violates unique constraint \"subscriptions_email_key\"" => ("Email already subscribed", 400),
+    "duplicate key value violates unique constraint \"users_email_key\"" => ("Email already registered", 400),
+    "duplicate key value violates unique constraint \"users_username_key\"" => ("Username not available", 400),
+    "duplicate key value violates unique constraint \"users_normalized_username_key\"" => ("Username not available", 400),
 };
 
 pub trait ErrorReport {
@@ -55,6 +58,11 @@ impl ErrorPayload {
                 status = value.1;
                 break;
             }
+        }
+        if (400..499).contains(&status) {
+            tracing::info!("{} ({}) {} ", error.level(), status, &message);
+        } else if status > 500 {
+            tracing::error!("{} ({}) {} ", error.level(), status, &message);
         }
 
         Self {

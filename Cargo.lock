@@ -147,6 +147,8 @@ dependencies = [
  "chrono",
  "fake",
  "http-body-util",
+ "once_cell",
+ "regex",
  "rustrict",
  "secrecy",
  "serde",
@@ -3024,6 +3026,7 @@ dependencies = [
  "async-trait",
  "axum",
  "config",
+ "http-body-util",
  "lettre",
  "linkify",
  "mime",
@@ -3034,6 +3037,7 @@ dependencies = [
  "sqlx",
  "thiserror",
  "tokio",
+ "tracing",
  "validator",
 ]
 

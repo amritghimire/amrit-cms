@@ -1,11 +1,9 @@
-use crate::errors::auth::{EmailCheckError, UserRegistrationError, UsernameCheckError};
-use crate::errors::user::UserError;
-use crate::extractor::{Confirmation, ConfirmationActionType, User};
+use crate::errors::auth::{
+    EmailCheckError, FetchUserError, UserRegistrationError, UsernameCheckError,
+};
+use crate::extractor::User;
 use secrecy::ExposeSecret;
-use serde_json::json;
 use sqlx::PgConnection;
-use utils::email::send_email;
-use utils::state::AppState;
 
 #[tracing::instrument(name = "Checking for existing username")]
 pub async fn is_username_used(
@@ -68,26 +66,21 @@ pub async fn insert_user(
     Ok(output.id)
 }
 
-#[tracing::instrument(name = "Send verification link", skip(state, user))]
-pub async fn send_verification_link(state: &AppState, user: &User) -> Result<(), UserError> {
-    let confirmation = Confirmation::new(
-        user.id,
-        ConfirmationActionType::UserVerification,
-        json!({"email": user.email}),
-    );
-
-    let client = state.email_client.to_owned();
-    let confirmation_link =
-        confirmation.confirmation_url(&state.settings.application.full_url())?;
-    let email_content = confirmation.email_contents(&confirmation_link);
-    send_email(
-        &client,
-        user.email.clone(),
-        "Please verify your account to proceed".to_string(),
-        email_content.0,
-        email_content.1,
+#[tracing::instrument(name = "Fetching user form user id", skip(transaction))]
+pub async fn fetch_user(
+    transaction: &mut PgConnection,
+    user_id: i32,
+) -> Result<User, FetchUserError> {
+    let user = sqlx::query_as!(
+        User,
+        r#"
+        SELECT * from users where id = $1
+        "#,
+        user_id
     )
+    .fetch_one(transaction)
     .await
-    .map_err(UserError::ConfirmationEmailError)?;
-    Ok(())
+    .map_err(FetchUserError::UserFetch)?;
+
+    Ok(user)
 }

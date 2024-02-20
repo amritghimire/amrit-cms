@@ -23,6 +23,8 @@ rustrict.workspace = true
 argon2.workspace = true
 zxcvbn.workspace = true
 url.workspace = true
+once_cell.workspace = true
+regex.workspace = true
 
 [dev-dependencies]
 fake.workspace = true

@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO confirmations ( confirmation_id, details, verifier_hash,\n         user_id, created_at, expires_at, action_type)\n         VALUES ($1, $2, $3, $4, $5, $6, $7)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Json",
+        "Varchar",
+        "Int4",
+        "Timestamptz",
+        "Timestamptz",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3ca8d8dab09b2e403d742bd4771a37ac73f72347e927d32e6b725e56fba3f369"
+}

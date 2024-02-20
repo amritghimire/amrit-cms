@@ -3,13 +3,13 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2, PasswordHash, PasswordVerifier,
 };
-use chrono::DateTime;
 use chrono::Utc;
+use chrono::{DateTime, Duration};
 use secrecy::{ExposeSecret, Secret};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
-use sqlx::{types::Json, FromRow};
+use sqlx::FromRow;
 use uuid::Uuid;
 use zxcvbn::zxcvbn;
 
@@ -126,26 +126,47 @@ impl User {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Copy, Clone)]
 pub enum ConfirmationActionType {
     UserVerification,
+    Invalid,
+}
+
+impl From<String> for ConfirmationActionType {
+    fn from(value: String) -> Self {
+        match value.to_lowercase().as_str() {
+            "userverification" => ConfirmationActionType::UserVerification,
+            _ => ConfirmationActionType::Invalid,
+        }
+    }
+}
+
+impl From<ConfirmationActionType> for String {
+    fn from(value: ConfirmationActionType) -> Self {
+        match value {
+            ConfirmationActionType::UserVerification => "userverification".to_string(),
+            ConfirmationActionType::Invalid => "invalid".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, FromRow, Deserialize)]
 pub struct Confirmation {
     pub confirmation_id: Uuid,
-    pub details: Json<Value>,
+    pub details: Option<Value>,
     pub verifier_hash: String,
     pub user_id: i32,
     pub created_at: DateTime<Utc>,
     pub expires_at: DateTime<Utc>,
     pub action_type: ConfirmationActionType,
-    #[sqlx(skip)]
-    pub token: Option<Secret<String>>,
 }
 
 impl Confirmation {
-    pub fn new(user_id: i32, action_type: ConfirmationActionType, details: Value) -> Self {
+    pub fn new(
+        user_id: i32,
+        action_type: ConfirmationActionType,
+        details: Value,
+    ) -> (Self, String) {
         let confirmation_id = Uuid::new_v4();
         let verifier = Uuid::new_v4();
 
@@ -158,28 +179,22 @@ impl Confirmation {
         let verifier_hash = format!("{:x}", hasher.finalize());
         let token = format!("{}.{}", confirmation_id, verifier);
 
-        Self {
-            confirmation_id,
-            details: details.into(),
-            verifier_hash,
-            user_id,
-            created_at: Utc::now(),
-            expires_at: Utc::now(),
-            action_type,
-            token: Some(Secret::new(token.to_string())),
-        }
+        (
+            Self {
+                confirmation_id,
+                details: details.into(),
+                verifier_hash,
+                user_id,
+                created_at: Utc::now(),
+                expires_at: Utc::now() + Duration::hours(24),
+                action_type,
+            },
+            token,
+        )
     }
 
-    pub fn confirmation_url(&self, full_url: &str) -> Result<String, UserError> {
-        if let Some(token) = &self.token {
-            let confirmation_link = format!(
-                "{}/subscription/confirm?token={}",
-                full_url,
-                token.expose_secret()
-            );
-            return Ok(confirmation_link);
-        }
-        Err(UserError::ConfirmationTokenMissing)
+    pub fn confirmation_url(&self, full_url: &str, token: Secret<String>) -> String {
+        format!("{}/auth/confirm/{}", full_url, token.expose_secret())
     }
 
     pub fn email_contents(&self, confirmation_link: &str) -> (String, String) {
@@ -200,6 +215,13 @@ impl Confirmation {
                     { confirmation_link }
                 ),
             ),
+            _ => {
+                unreachable!()
+            }
         }
+    }
+
+    pub fn is_expired(&self) -> bool {
+        self.expires_at < Utc::now()
     }
 }

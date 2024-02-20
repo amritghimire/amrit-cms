@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update users set is_confirmed = true where id = $1;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7cc6c04895b8241084de6e40fadee7beb50df1443e59d7f33d9f4f10b81b949f"
+}
