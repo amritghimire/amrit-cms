@@ -1,3 +1,6 @@
+mod common;
+
+use axum::http::header::{AUTHORIZATION, SET_COOKIE};
 use axum::http::StatusCode;
 use axum::response::Response;
 use axum::{http, Router};
@@ -8,19 +11,15 @@ use fake::faker::name::en::Name;
 use fake::{Dummy, Fake, Faker};
 use serde::Serialize;
 use serde_json::{json, Value};
-use std::sync::mpsc;
-
-use auth_service::router::create_router;
 use tower::util::ServiceExt;
 
-use auth_service::extractor::{ConfirmationActionType, User};
+use auth_service::extractors::confirmation::ConfirmationActionType;
+use auth_service::extractors::session::SESSION_TOKEN_COOKIE;
+use auth_service::extractors::user::User;
 use sqlx::PgPool;
 use url::Url;
-use utils::configuration::{RunMode, Settings};
 use utils::email::get_link;
 use utils::test;
-
-static STRONG_PASSWORD: &str = "r0sebudmaelstrom11/20/91aaaa";
 
 #[derive(Debug, Dummy, Serialize, Clone)]
 pub struct RegistrationPayload {
@@ -37,30 +36,35 @@ pub struct RegistrationPayload {
 
 #[sqlx::test]
 async fn registration_200_valid_form_data(pool: PgPool) {
-    let (tx, _rx) = mpsc::sync_channel(5);
-    let state = test::test_state_for_email(pool, tx);
+    let (_rx, _, app) = common::setup_app(pool);
+    let (_, data) = registration_payload();
 
-    let app = create_router().with_state(state);
-    let payload: RegistrationPayload = Faker.fake();
-    let data = serde_json::to_value(payload).unwrap();
-    let data = replace_password(&data, STRONG_PASSWORD);
-    let data = replace_key(&data, "username", "safe_username");
     let response = send_request(&app, &data).await;
 
+    let authorization_header: &str = response
+        .headers()
+        .get(AUTHORIZATION)
+        .unwrap()
+        .to_str()
+        .unwrap();
+    let cookie_header: &str = response
+        .headers()
+        .get(SET_COOKIE)
+        .unwrap()
+        .to_str()
+        .unwrap();
+
     assert_eq!(response.status(), StatusCode::OK);
+    assert!(!authorization_header.is_empty());
+    assert!(cookie_header.contains(SESSION_TOKEN_COOKIE))
 }
 
 #[sqlx::test]
 async fn registration_valid_form_data_is_inserted(pool: PgPool) {
     let mut conn = pool.acquire().await.expect("Unable to acquire connection");
-    let (tx, _rx) = mpsc::sync_channel(5);
-    let state = test::test_state_for_email(pool, tx);
+    let (rx, _, app) = common::setup_app(pool);
+    let (payload, data) = registration_payload();
 
-    let app = create_router().with_state(state);
-    let payload: RegistrationPayload = Faker.fake();
-    let data = serde_json::to_value(payload.clone()).unwrap();
-    let data = replace_password(&data, STRONG_PASSWORD);
-    let data = replace_key(&data, "username", "safe_username");
     let response = send_request(&app, &data).await;
 
     assert_eq!(
@@ -87,7 +91,7 @@ async fn registration_valid_form_data_is_inserted(pool: PgPool) {
     );
     assert!(saved.is_active);
     assert!(!saved.is_confirmed);
-    assert!(saved.check_password(STRONG_PASSWORD));
+    assert!(saved.check_password(common::STRONG_PASSWORD));
     assert!(!saved.check_password("wrong"));
 
     let confirmation = sqlx::query!("SELECT * from confirmations")
@@ -105,14 +109,9 @@ async fn registration_valid_form_data_is_inserted(pool: PgPool) {
 
 #[sqlx::test]
 async fn registration_sends_confirmation_email(pool: PgPool) {
-    let (tx, rx) = mpsc::sync_channel(5);
-    let settings = Settings::get_config(RunMode::Test).expect("Unable to fetch test config");
-    let state = test::test_state_for_email(pool, tx);
-    let app = create_router().with_state(state);
-    let payload: RegistrationPayload = Faker.fake();
-    let data = serde_json::to_value(payload.clone()).unwrap();
-    let data = replace_password(&data, STRONG_PASSWORD);
-    let data = replace_key(&data, "username", "safe_username");
+    let (rx, settings, app) = common::setup_app(pool);
+    let (payload, data) = registration_payload();
+
     send_request(&app, &data).await;
 
     let email_object = rx
@@ -135,14 +134,9 @@ async fn registration_sends_confirmation_email(pool: PgPool) {
 
 #[sqlx::test]
 async fn registration_already_exists(pool: PgPool) {
-    let (tx, _rx) = mpsc::sync_channel(5);
-    let state = test::test_state_for_email(pool, tx);
+    let (_rx, _, app) = common::setup_app(pool);
+    let (payload, data) = registration_payload();
 
-    let app = create_router().with_state(state);
-    let payload: RegistrationPayload = Faker.fake();
-    let data = serde_json::to_value(payload.clone()).unwrap();
-    let data = replace_password(&data, STRONG_PASSWORD);
-    let data = replace_key(&data, "username", "safe_username");
     send_request(&app, &data).await;
 
     // Send with same username
@@ -166,13 +160,8 @@ async fn registration_already_exists(pool: PgPool) {
 
 #[sqlx::test]
 async fn register_returns_a_400_for_invalid_form_data(pool: PgPool) {
-    let (tx, _rx) = mpsc::sync_channel(5);
-    let state = test::test_state_for_email(pool, tx);
-    let app = create_router().with_state(state);
-
-    let payload: RegistrationPayload = Faker.fake();
-    let data = serde_json::to_value(payload).unwrap();
-    let data = replace_password(&data, STRONG_PASSWORD);
+    let (_, _, app) = common::setup_app(pool);
+    let (_, data) = registration_payload();
 
     let test_cases = vec![
         (json!({}), "empty payload"),
@@ -224,6 +213,14 @@ async fn register_returns_a_400_for_invalid_form_data(pool: PgPool) {
             error_message
         );
     }
+}
+
+fn registration_payload() -> (RegistrationPayload, Value) {
+    let payload: RegistrationPayload = Faker.fake();
+    let data = serde_json::to_value(payload.clone()).unwrap();
+    let data = replace_password(&data, common::STRONG_PASSWORD);
+    let data = replace_key(&data, "username", "safe_username");
+    (payload, data)
 }
 
 async fn send_request(app: &Router, data: &Value) -> Response {

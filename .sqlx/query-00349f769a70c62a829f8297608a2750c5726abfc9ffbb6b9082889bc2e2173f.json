@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO sessions ( identifier, verifier_hash, expiration_date, user_id, extra_info)\n        VALUES ($1, $2, $3, $4, $5)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Timestamptz",
+        "Int4",
+        "Json"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "00349f769a70c62a829f8297608a2750c5726abfc9ffbb6b9082889bc2e2173f"
+}

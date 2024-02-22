@@ -91,6 +91,7 @@ pub struct ApplicationSettings {
     pub port: u16,
     pub host: String,
     pub scheme: Option<String>,
+    pub key: String,
 }
 
 impl ApplicationSettings {

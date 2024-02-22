@@ -1,6 +1,7 @@
 application:
   port: 8080
   host: 0.0.0.0
+  key: "VdI8w9UnTdTetW2VvVWZtzLKrvxLWxc9ciLuBxDdB5Pc+9sSLnTW7eu21KK7Ht0pbErmtyo59XG/2XPJinSIZg=="
 database:
   host: "127.0.0.1"
   port: 5432

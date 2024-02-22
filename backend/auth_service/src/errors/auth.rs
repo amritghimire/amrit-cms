@@ -1,3 +1,4 @@
+use axum::http::header::InvalidHeaderValue;
 use serde_json::{json, Value};
 use util_macros::ErrorPayloadMacro;
 use utils::errors::{ErrorPayload, ErrorReport};
@@ -22,6 +23,8 @@ pub enum UserRegistrationError {
     PasswordHashEmpty,
     #[error("Failed to commit transaction: {0}")]
     TransactionCommitError(#[source] sqlx::Error),
+    #[error("Failed to form header")]
+    HeaderError(#[source] InvalidHeaderValue),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -66,6 +69,7 @@ impl ErrorReport for UserRegistrationError {
             UserRegistrationError::EmailCheckError(_) => 400,
             UserRegistrationError::EmailNotAvailable => 400,
             UserRegistrationError::InsertConfirmationFailed(_) => 500,
+            UserRegistrationError::HeaderError(_) => 500,
         }
     }
 

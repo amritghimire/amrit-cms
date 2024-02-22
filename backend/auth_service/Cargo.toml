@@ -9,6 +9,7 @@ edition = "2021"
 utils = {path = "../utils"}
 util_macros = {path = "../util_macros"}
 axum.workspace = true
+axum-extra.workspace = true
 sqlx.workspace = true
 chrono.workspace = true
 secrecy.workspace = true
@@ -25,6 +26,7 @@ zxcvbn.workspace = true
 url.workspace = true
 once_cell.workspace = true
 regex.workspace = true
+async-trait.workspace = true
 
 [dev-dependencies]
 fake.workspace = true

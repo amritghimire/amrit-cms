@@ -1,7 +1,7 @@
 use crate::errors::auth::{
     EmailCheckError, FetchUserError, UserRegistrationError, UsernameCheckError,
 };
-use crate::extractor::User;
+use crate::extractors::user::User;
 use secrecy::ExposeSecret;
 use sqlx::PgConnection;
 

@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * from sessions where identifier = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "identifier",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "verifier_hash",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "expiration_date",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 3,
+        "name": "user_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "extra_info",
+        "type_info": "Json"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "51a014dbf2340024dbae41e4bf0a03a737e022cc5174057d4ae5b918ce25e129"
+}

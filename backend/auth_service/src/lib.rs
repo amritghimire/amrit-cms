@@ -1,7 +1,7 @@
 extern crate core;
 
 pub mod errors;
-pub mod extractor;
+pub mod extractors;
 mod handlers;
 pub mod helpers;
 pub mod payload;

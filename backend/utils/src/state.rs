@@ -1,6 +1,7 @@
 use crate::configuration::{RunMode, Settings};
 use crate::email::{get_email_client, EmailClient, MessagePassingClient};
 use axum::extract::FromRef;
+use axum_extra::extract::cookie::Key;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::time::Duration;
@@ -79,5 +80,11 @@ impl FromRef<AppState> for Settings {
 impl FromRef<AppState> for EmailClient {
     fn from_ref(app_state: &AppState) -> EmailClient {
         app_state.email_client.clone()
+    }
+}
+
+impl FromRef<AppState> for Key {
+    fn from_ref(state: &AppState) -> Self {
+        Key::from(state.settings.application.key.as_ref())
     }
 }

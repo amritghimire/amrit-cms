@@ -23,6 +23,7 @@ sqlx.workspace = true
 linkify.workspace = true
 tracing.workspace = true
 http-body-util.workspace = true
+axum-extra.workspace = true
 
 
 [build-dependencies]

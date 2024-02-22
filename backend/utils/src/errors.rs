@@ -1,9 +1,10 @@
-use axum::extract::rejection::JsonRejection;
+use axum::extract::rejection::{ExtensionRejection, JsonRejection};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use phf::phf_map;
 use serde_json::{json, Value};
+use std::convert::Infallible;
 use std::error::Error;
 
 static DATABASE_ERRORS: phf::Map<&'static str, (&'static str, u16)> = phf_map! {
@@ -111,6 +112,18 @@ impl Error for ErrorPayload {}
 impl From<String> for ErrorPayload {
     fn from(item: String) -> Self {
         ErrorPayload::new(&item, None, None)
+    }
+}
+
+impl From<ExtensionRejection> for ErrorPayload {
+    fn from(value: ExtensionRejection) -> Self {
+        ErrorPayload::new(&value.to_string(), None, None)
+    }
+}
+
+impl From<Infallible> for ErrorPayload {
+    fn from(value: Infallible) -> Self {
+        ErrorPayload::new(&value.to_string(), None, None)
     }
 }
 

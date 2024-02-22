@@ -1,5 +1,5 @@
 use crate::errors::user::UserError;
-use crate::extractor::User;
+use crate::extractors::user::User;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use rustrict::CensorStr;

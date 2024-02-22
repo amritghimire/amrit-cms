@@ -1,6 +1,6 @@
 use crate::errors::auth::UserRegistrationError;
 use crate::errors::confirm::ConfirmUserError;
-use crate::extractor::{Confirmation, ConfirmationActionType};
+use crate::extractors::confirmation::{Confirmation, ConfirmationActionType};
 use crate::helpers::confirmation::{delete_confirmation, get_confirmation, mark_user_as_confirmed};
 use crate::helpers::user::fetch_user;
 use axum::extract::{Path, State};

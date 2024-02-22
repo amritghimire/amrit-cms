@@ -1,7 +1,8 @@
 use crate::errors::auth::UserRegistrationError;
 use crate::errors::confirm::ConfirmUserError;
 use crate::errors::user::UserError;
-use crate::extractor::{Confirmation, User};
+use crate::extractors::confirmation::Confirmation;
+use crate::extractors::user::User;
 use secrecy::Secret;
 use sqlx::PgConnection;
 use utils::email::send_email;

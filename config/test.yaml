@@ -6,3 +6,4 @@ database:
   database_name: "amrit_cms_test"
 application:
   scheme: "http"
+  key: "VdI8w9UnTdTetW2VvVWZtzLKrvxLWxc9ciLuBxDdB5Pc+9sSLnTW7eu21KK7Ht0pbErmtyo59XG/2XPJinSIZg=="
