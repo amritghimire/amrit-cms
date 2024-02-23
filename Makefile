@@ -72,11 +72,11 @@ sqlx:
 
 .PHONY: prepare_sqlx
 prepare_sqlx:
-	cargo sqlx prepare --workspace -- --lib
+	cargo sqlx prepare --workspace -- --lib --tests
 
 .PHONY: check_sqlx
 check_sqlx:
-	cargo sqlx prepare --check --workspace -- --lib
+	cargo sqlx prepare --check --workspace -- --lib --tests
 
 .PHONY: docker
 docker:

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update confirmations set expires_at = $1 where confirmation_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5374e93ae2036e65cd483ac0a03d287c8dcfa93362b11489e29ce2c1fc6822c7"
+}

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update confirmations set action_type = 'invalid' where confirmation_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "356b15096769f073dedc600bc987f348eb87e05965056205e32d57b0078eab8a"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update confirmations set details = $1 where confirmation_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Json",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "dcfafa68c367ed259d6d94688cd938410532971dd435804eb92ff2a3e21d8c83"
+}
