@@ -1,0 +1,56 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * from confirmations",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "confirmation_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "details",
+        "type_info": "Json"
+      },
+      {
+        "ordinal": 2,
+        "name": "verifier_hash",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "user_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "expires_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "action_type",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "792c9ed4d91c212ce149732fd25ac2ba3d3f49441c0aa85c266df017734151c1"
+}
