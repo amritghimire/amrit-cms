@@ -20,10 +20,10 @@ util_macros = { path = "../util_macros" }
 subscription_service = { path = "../subscription_service" }
 auth_service = { path = "../auth_service" }
 sqlx.workspace = true
-shuttle-runtime.workspace = true
-shuttle-axum.workspace = true
-shuttle-secrets.workspace = true
-shuttle-shared-db.workspace = true
+shuttle-runtime = {version =  "0.39.0", optional = true }
+shuttle-axum = { version = "0.39.0", optional = true  }
+shuttle-secrets = { version = "0.39.0", optional = true  }
+shuttle-shared-db = { version = "0.39.0", features = ["postgres", "sqlx"], optional = true  }
 tokio-util.workspace = true
 
 # Frontend
@@ -51,3 +51,6 @@ required-features = []
 
 [features]
 server = []
+default = ["shuttle"]
+shuttle = ["shuttle-runtime", "shuttle-axum", "shuttle-secrets", "shuttle-shared-db"]
+local = []

@@ -64,11 +64,5 @@ argon2 = "0.5.3"
 zxcvbn = "2.2.2"
 regex = "1.7.1"
 
-
-# Shuttle dependencies
-shuttle-runtime = "0.39.0"
-shuttle-axum = "0.39.0"
-shuttle-secrets = "0.39.0"
-shuttle-shared-db = { version = "0.39.0", features = ["postgres", "sqlx"] }
 tokio-util = { version = "0.7.10", features = ["net", "io", "io-util"] }
 
