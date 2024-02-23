@@ -1,5 +1,7 @@
 #[cfg(feature = "local")]
 use api_server::routes;
+#[cfg(feature = "shuttle")]
+use api_server::routes;
 #[cfg(feature = "local")]
 use once_cell::sync::Lazy;
 
@@ -9,6 +11,9 @@ use std::env;
 use utils::configuration::Settings;
 #[cfg(feature = "local")]
 use utils::state::AppState;
+
+#[cfg(feature = "shuttle")]
+use sqlx::PgPool;
 
 #[cfg(feature = "local")]
 static TRACING: Lazy<()> = Lazy::new(|| {
@@ -36,7 +41,9 @@ async fn main() {
     api_server::run(app, addr).await;
 }
 
-#[cfg(not(feature = "local"))]
-fn main() {
-    // dummy main function if shuttle is used
+#[cfg(feature = "shuttle")]
+#[shuttle_runtime::main]
+pub async fn axum(#[shuttle_shared_db::Postgres] pool: PgPool) -> shuttle_axum::ShuttleAxum {
+    let router = routes::create_router(pool).await;
+    Ok(router.into())
 }
