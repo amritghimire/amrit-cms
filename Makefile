@@ -10,10 +10,18 @@ DATABASE_URL:=postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NA
 check:
 	cargo check
 
+.PHONY: dev
+dev:
+	cargo watch -x 'run -p api_server --no-default-features --features local'
+
 .PHONY: run
 run:
 	cd frontend/client && trunk build
-	cargo watch -x 'run -p api_server'
+	cargo run -p api_server --no-default-features --features local
+
+.PHONY: release
+release:
+	cargo build --release  --no-default-features --features local
 
 .PHONY: watch
 watch:
