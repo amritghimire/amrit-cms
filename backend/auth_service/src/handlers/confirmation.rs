@@ -1,8 +1,9 @@
 use crate::errors::auth::UserRegistrationError;
 use crate::errors::confirm::ConfirmUserError;
+use crate::extractors::authentication::LoggedInUser;
 use crate::extractors::confirmation::{Confirmation, ConfirmationActionType};
+use crate::extractors::user::User;
 use crate::helpers::confirmation::{delete_confirmation, get_confirmation, mark_user_as_confirmed};
-use crate::helpers::user::fetch_user;
 use axum::extract::{Path, State};
 use axum::response::IntoResponse;
 use axum::Json;
@@ -15,8 +16,10 @@ use utils::state::AppState;
 pub async fn confirm(
     State(state): State<AppState>,
     Path(token): Path<String>,
+    user: LoggedInUser,
 ) -> Result<impl IntoResponse, ErrorPayload> {
     let pool = &state.connection;
+    let LoggedInUser { user } = user;
 
     tracing::info!("starting confirmation token");
     let mut transaction = pool.begin().await.map_err(UserRegistrationError::Pool)?;
@@ -32,6 +35,11 @@ pub async fn confirm(
         delete_confirmation(&mut transaction, confirmation_id).await?;
         Err(ConfirmUserError::InvalidToken("expired token".into()))?;
     }
+    if user.id != confirmation.user_id {
+        Err(ConfirmUserError::InsufficientPermission(
+            "login with the user you want to verify".into(),
+        ))?;
+    }
 
     let mut hasher = Sha256::new();
     hasher.update(verifier.as_bytes());
@@ -42,7 +50,7 @@ pub async fn confirm(
     }
     let response = match confirmation.action_type {
         ConfirmationActionType::UserVerification => {
-            Ok(verify_user(&mut transaction, &confirmation).await?)
+            Ok(verify_user(&mut transaction, &confirmation, user).await?)
         }
         ConfirmationActionType::Invalid => {
             Err(ConfirmUserError::InvalidToken("invalid token type".into()))?
@@ -58,10 +66,8 @@ pub async fn confirm(
 async fn verify_user(
     transaction: &mut PgConnection,
     confirmation: &Confirmation,
+    user: User,
 ) -> Result<impl IntoResponse, ConfirmUserError> {
-    let user = fetch_user(transaction, confirmation.user_id)
-        .await
-        .map_err(ConfirmUserError::FetchUserFailed)?;
     let confirmation_email = confirmation
         .details
         .clone()

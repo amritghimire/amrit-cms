@@ -6,11 +6,12 @@ use crate::helpers::sessions::user_from_session;
 use axum::http::header::AUTHORIZATION;
 use axum::{
     async_trait,
-    extract::{Extension, FromRequestParts},
+    extract::FromRequestParts,
     http::{request::Parts, HeaderMap},
     response::{IntoResponse, Response},
 };
-use axum_extra::extract::CookieJar;
+use axum_extra::extract::{cookie::Key, SignedCookieJar};
+
 use utils::errors::ErrorPayload;
 use utils::state::AppState;
 
@@ -50,13 +51,13 @@ impl TryFrom<User> for AuthenticatedUser {
 }
 
 #[async_trait]
-impl<S> FromRequestParts<S> for AuthenticatedUser
-where
-    S: Send + Sync,
-{
+impl FromRequestParts<AppState> for AuthenticatedUser {
     type Rejection = Response;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
         let user = process_session_from_parts(parts, state, true).await;
         if let Err(err) = user {
             return Err(err.into_response());
@@ -69,13 +70,13 @@ where
 }
 
 #[async_trait]
-impl<S> FromRequestParts<S> for LoggedInUser
-where
-    S: Send + Sync,
-{
+impl FromRequestParts<AppState> for LoggedInUser {
     type Rejection = Response;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
         let user = process_session_from_parts(parts, state, true).await;
         match user {
             Ok(user) => Ok(user.into()),
@@ -85,13 +86,13 @@ where
 }
 
 #[async_trait]
-impl<S> FromRequestParts<S> for AuthenticationHeaderUser
-where
-    S: Send + Sync,
-{
+impl FromRequestParts<AppState> for AuthenticationHeaderUser {
     type Rejection = Response;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
         let user = process_session_from_parts(parts, state, false).await;
         match user {
             Ok(user) => Ok(user.into()),
@@ -100,17 +101,11 @@ where
     }
 }
 
-async fn process_session_from_parts<S>(
+async fn process_session_from_parts(
     parts: &mut Parts,
-    state: &S,
+    state: &AppState,
     cookie: bool,
-) -> Result<User, ErrorPayload>
-where
-    S: Send + Sync,
-{
-    use axum::RequestPartsExt;
-
-    // You can either call them directly...
+) -> Result<User, ErrorPayload> {
     let headers = HeaderMap::from_request_parts(parts, state).await?;
     let mut token = "".to_string();
     if let Some(header) = headers.get(AUTHORIZATION) {
@@ -120,7 +115,7 @@ where
     }
 
     if cookie && token.is_empty() {
-        let Extension(jar) = parts.extract::<Extension<CookieJar>>().await?;
+        let jar = SignedCookieJar::<Key>::from_request_parts(parts, state).await?;
         let session_token = jar
             .get(SESSION_TOKEN_COOKIE)
             .map(|cookie| cookie.value().to_owned());
@@ -129,13 +124,14 @@ where
         }
     }
 
+    tracing::debug!("Token found {:?}", token);
+
     if token.is_empty() {
         Err(UserError::AuthorizationTokenInvalid(
             "token not available".into(),
         ))?;
     }
 
-    let Extension(state) = parts.extract::<Extension<AppState>>().await?;
     let pool = &state.connection;
     let mut transaction = pool.begin().await.map_err(UserRegistrationError::Pool)?;
     let user = user_from_session(&mut transaction, token).await?;

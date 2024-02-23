@@ -32,7 +32,6 @@ pub async fn register(
 ) -> Result<impl IntoResponse, ErrorPayload> {
     let pool = &state.connection;
 
-    tracing::info!("Creating a new registration");
     let mut transaction = pool.begin().await.map_err(UserRegistrationError::Pool)?;
 
     User::check_acceptable_password(&payload.password, &[&payload.name, &payload.username])?;
@@ -46,8 +45,6 @@ pub async fn register(
     );
     add_confirmation(&mut transaction, &confirmation).await?;
     let session_token = create_new_session(&mut transaction, user.id, json!({})).await?;
-    let session_header =
-        HeaderValue::from_str(&session_token).map_err(UserRegistrationError::HeaderError)?;
 
     transaction
         .commit()
@@ -55,6 +52,9 @@ pub async fn register(
         .map_err(UserRegistrationError::TransactionCommitError)?;
 
     send_verification_link(&state, &user, &confirmation, confirmation_token).await?;
+    let session_header =
+        HeaderValue::from_str(&session_token).map_err(UserRegistrationError::HeaderError)?;
+
     let jar = jar.add(Cookie::new(SESSION_TOKEN_COOKIE, session_token));
     let mut response = (jar, Json(user)).into_response();
     response.headers_mut().insert(AUTHORIZATION, session_header);

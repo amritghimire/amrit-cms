@@ -6,6 +6,8 @@ use utils::errors::{ErrorPayload, ErrorReport};
 pub enum ConfirmUserError {
     #[error("Invalid token provided: {0}")]
     InvalidToken(String),
+    #[error("insufficient permission: {0}")]
+    InsufficientPermission(String),
     #[error("Invalid token format")]
     InvalidTokenUuid(#[source] uuid::Error),
     #[error("Failed to fetch confirmation")]
@@ -19,5 +21,11 @@ pub enum ConfirmUserError {
 impl ErrorReport for ConfirmUserError {
     fn message(&self) -> String {
         self.to_string()
+    }
+    fn status(&self) -> u16 {
+        match self {
+            ConfirmUserError::InsufficientPermission(_) => 401,
+            _ => 400,
+        }
     }
 }

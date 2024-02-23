@@ -37,6 +37,7 @@ impl ErrorReport for UserError {
             UserError::UserNotVerified => 403,
             UserError::ConfirmationEmailError(_) => 500,
             UserError::PasswordCheckFailed(_) => 500,
+            UserError::AuthorizationTokenInvalid(_) => 401,
             _ => 400,
         }
     }

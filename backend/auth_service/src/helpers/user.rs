@@ -6,21 +6,21 @@ use secrecy::ExposeSecret;
 use sqlx::PgConnection;
 
 #[tracing::instrument(name = "Checking for existing username")]
-pub async fn is_username_used(
+pub async fn fetch_by_username(
     transaction: &mut PgConnection,
     username: &str,
-) -> Result<bool, UsernameCheckError> {
-    sqlx::query!(
+) -> Result<Option<User>, UsernameCheckError> {
+    let user = sqlx::query_as!(
+        User,
         r#"
-        SELECT EXISTS(SELECT 1 FROM users WHERE normalized_username = $1)
+        select * from users where normalized_username = $1
         "#,
         username
     )
-    .fetch_one(transaction)
+    .fetch_optional(transaction)
     .await
-    .map_err(UsernameCheckError::UsernameCheck)?
-    .exists
-    .ok_or(UsernameCheckError::Unexpected)
+    .map_err(UsernameCheckError::UsernameCheck)?;
+    Ok(user)
 }
 
 #[tracing::instrument(name = "Checking for existing email")]

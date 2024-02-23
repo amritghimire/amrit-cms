@@ -62,7 +62,7 @@ async fn registration_200_valid_form_data(pool: PgPool) {
 #[sqlx::test]
 async fn registration_valid_form_data_is_inserted(pool: PgPool) {
     let mut conn = pool.acquire().await.expect("Unable to acquire connection");
-    let (rx, _, app) = common::setup_app(pool);
+    let (_rx, _, app) = common::setup_app(pool);
     let (payload, data) = registration_payload();
 
     let response = send_request(&app, &data).await;

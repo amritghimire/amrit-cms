@@ -1,3 +1,4 @@
+use crate::errors::user::UserError;
 use axum::http::header::InvalidHeaderValue;
 use serde_json::{json, Value};
 use util_macros::ErrorPayloadMacro;
@@ -25,6 +26,36 @@ pub enum UserRegistrationError {
     TransactionCommitError(#[source] sqlx::Error),
     #[error("Failed to form header")]
     HeaderError(#[source] InvalidHeaderValue),
+}
+
+#[derive(Debug, thiserror::Error, ErrorPayloadMacro)]
+pub enum UserLoginError {
+    #[error("Failed to acquire a Postgres connection from the pool")]
+    Pool(#[source] sqlx::Error),
+    #[error("Unexpected database error")]
+    DatabaseError(#[source] sqlx::Error),
+    #[error("login failed: {0}")]
+    LoginFailed(String),
+    #[error("unexpected error")]
+    UnexpectedError(#[source] UsernameCheckError),
+    #[error("unexpected user error")]
+    UnexpectedUserError(#[source] UserError),
+}
+
+impl ErrorReport for UserLoginError {
+    fn message(&self) -> String {
+        self.to_string()
+    }
+
+    fn status(&self) -> u16 {
+        match self {
+            UserLoginError::Pool(_) => 500,
+            UserLoginError::LoginFailed(_) => 400,
+            UserLoginError::UnexpectedError(_) => 500,
+            UserLoginError::UnexpectedUserError(_) => 500,
+            UserLoginError::DatabaseError(_) => 500,
+        }
+    }
 }
 
 #[derive(Debug, thiserror::Error)]

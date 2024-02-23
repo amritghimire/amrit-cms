@@ -65,7 +65,7 @@ pub async fn user_from_session(
     }
     let mut session = session.unwrap();
     if session.is_expired() {
-        // TODO: DELETE SESSION
+        delete_session(transaction, session.identifier).await?;
         Err(UserError::AuthorizationTokenInvalid(
             "session expired".into(),
         ))?;
@@ -96,4 +96,21 @@ pub async fn user_from_session(
         .map_err(UserError::UserFetchError)?;
 
     Ok(user)
+}
+
+#[tracing::instrument(name = "Deleting session for id", skip(transaction))]
+pub async fn delete_session(
+    transaction: &mut PgConnection,
+    identifier: Uuid,
+) -> Result<(), UserError> {
+    sqlx::query!(
+        r#"
+        DELETE FROM sessions where identifier = $1
+        "#,
+        identifier
+    )
+    .execute(&mut *transaction)
+    .await
+    .map_err(UserError::SessionError)?;
+    Ok(())
 }

@@ -1,16 +1,17 @@
 use auth_service::helpers::confirmation::get_confirmation;
 use auth_service::helpers::user::fetch_user;
 use auth_service::router::create_router;
-use axum::http::StatusCode;
+use axum::http::header::AUTHORIZATION;
+use axum::http::{HeaderValue, StatusCode};
 use axum::response::Response;
 use axum::{http, Router};
 use chrono::{Duration, Utc};
-use fake::Fake;
 use serde_json::json;
 use sqlx::PgPool;
 use tower::ServiceExt;
 use utils::state::AppState;
 use utils::test;
+use uuid::Uuid;
 mod common;
 
 #[sqlx::test]
@@ -19,10 +20,66 @@ async fn confirm_valid_token(pool: PgPool) {
 
     let state = AppState::test_state(pool, None);
     let app = create_router().with_state(state);
-    let (_, token) = common::confirmation_fixture(&mut conn).await;
-    let response = send_request(&app, &token).await;
+    let (confirmation, token) = common::confirmation_fixture(&mut conn).await;
+    let session_token = common::session_fixture(&mut conn, confirmation.user_id).await;
+    let response = send_request(&app, &token, &session_token).await;
 
     assert_eq!(response.status(), StatusCode::OK);
+}
+
+#[sqlx::test]
+async fn confirm_unauthorized(pool: PgPool) {
+    let mut conn = pool.acquire().await.expect("Unable to acquire connection");
+
+    let state = AppState::test_state(pool, None);
+    let app = create_router().with_state(state);
+    let (_, token) = common::confirmation_fixture(&mut conn).await;
+    let response = send_request(&app, &token, "").await;
+
+    test::assert_response(
+        response,
+        StatusCode::UNAUTHORIZED,
+        "Authorization token invalid: token not available",
+    )
+    .await;
+}
+
+#[sqlx::test]
+async fn confirm_invalid_token(pool: PgPool) {
+    let mut conn = pool.acquire().await.expect("Unable to acquire connection");
+    let identifier = Uuid::new_v4();
+    let session_token = format!("{}.verifier_hash", identifier);
+
+    let state = AppState::test_state(pool, None);
+    let app = create_router().with_state(state);
+    let (_, token) = common::confirmation_fixture(&mut conn).await;
+    let response = send_request(&app, &token, &session_token).await;
+
+    test::assert_response(
+        response,
+        StatusCode::UNAUTHORIZED,
+        "Authorization token invalid: session not found",
+    )
+    .await;
+}
+
+#[sqlx::test]
+async fn confirm_different_user_logged_in(pool: PgPool) {
+    let mut conn = pool.acquire().await.expect("Unable to acquire connection");
+
+    let state = AppState::test_state(pool, None);
+    let app = create_router().with_state(state);
+    let (_, token) = common::confirmation_fixture(&mut conn).await;
+    let new_user = common::user_fixture(&mut conn).await;
+    let session_token = common::session_fixture(&mut conn, new_user.id).await;
+    let response = send_request(&app, &token, &session_token).await;
+
+    test::assert_response(
+        response,
+        StatusCode::UNAUTHORIZED,
+        "insufficient permission: login with the user you want to verify",
+    )
+    .await;
 }
 
 #[sqlx::test]
@@ -32,7 +89,8 @@ async fn confirm_token_verify_user(pool: PgPool) {
     let state = AppState::test_state(pool, None);
     let app = create_router().with_state(state);
     let (confirmation, token) = common::confirmation_fixture(&mut conn).await;
-    send_request(&app, &token).await;
+    let session_token = common::session_fixture(&mut conn, confirmation.user_id).await;
+    send_request(&app, &token, &session_token).await;
 
     let user = fetch_user(&mut conn, confirmation.user_id).await.unwrap();
     assert!(user.is_confirmed);
@@ -50,7 +108,7 @@ async fn confirm_token_verify_user_failed(pool: PgPool) {
     let state = AppState::test_state(pool, None);
     let app = create_router().with_state(state);
     let (confirmation, token) = common::confirmation_fixture(&mut conn).await;
-
+    let session_token = common::session_fixture(&mut conn, confirmation.user_id).await;
     // missing confirmation details
     sqlx::query!(
         "update confirmations set details = null where confirmation_id = $1",
@@ -59,7 +117,7 @@ async fn confirm_token_verify_user_failed(pool: PgPool) {
     .execute(&mut *conn)
     .await
     .expect("Cannot update details");
-    let response = send_request(&app, &token).await;
+    let response = send_request(&app, &token, &session_token).await;
     test::assert_response(
         response,
         StatusCode::BAD_REQUEST,
@@ -76,7 +134,7 @@ async fn confirm_token_verify_user_failed(pool: PgPool) {
     .execute(&mut *conn)
     .await
     .expect("Cannot update details");
-    let response = send_request(&app, &token).await;
+    let response = send_request(&app, &token, &session_token).await;
     test::assert_response(
         response,
         StatusCode::BAD_REQUEST,
@@ -93,7 +151,7 @@ async fn confirm_token_verify_user_failed(pool: PgPool) {
     .execute(&mut *conn)
     .await
     .expect("Cannot update details");
-    let response = send_request(&app, &token).await;
+    let response = send_request(&app, &token, &session_token).await;
     test::assert_response(
         response,
         StatusCode::BAD_REQUEST,
@@ -110,7 +168,7 @@ async fn confirm_token_verify_user_failed(pool: PgPool) {
     .execute(&mut *conn)
     .await
     .expect("Cannot update details");
-    let response = send_request(&app, &token).await;
+    let response = send_request(&app, &token, &session_token).await;
     test::assert_response(
         response,
         StatusCode::BAD_REQUEST,
@@ -134,9 +192,9 @@ async fn confirm_token_invalid(pool: PgPool) {
     let state = AppState::test_state(pool, None);
     let app = create_router().with_state(state);
     let (confirmation, token) = common::confirmation_fixture(&mut conn).await;
-
+    let session_token = common::session_fixture(&mut conn, confirmation.user_id).await;
     // Incomplete token
-    let response = send_request(&app, "invalid").await;
+    let response = send_request(&app, "invalid", &session_token).await;
     test::assert_response(
         response,
         StatusCode::BAD_REQUEST,
@@ -144,7 +202,7 @@ async fn confirm_token_invalid(pool: PgPool) {
     )
     .await;
     // Empty token part
-    let response = send_request(&app, "invalid.").await;
+    let response = send_request(&app, "invalid.", &session_token).await;
     test::assert_response(
         response,
         StatusCode::BAD_REQUEST,
@@ -153,7 +211,12 @@ async fn confirm_token_invalid(pool: PgPool) {
     .await;
 
     // Invalid verifier
-    let response = send_request(&app, &format!("{}.invalid", confirmation.confirmation_id)).await;
+    let response = send_request(
+        &app,
+        &format!("{}.invalid", confirmation.confirmation_id),
+        &session_token,
+    )
+    .await;
     test::assert_response(
         response,
         StatusCode::BAD_REQUEST,
@@ -169,7 +232,7 @@ async fn confirm_token_invalid(pool: PgPool) {
     .execute(&mut *conn)
     .await
     .expect("Cannot update to invalid action type");
-    let response = send_request(&app, &token).await;
+    let response = send_request(&app, &token, &session_token).await;
     test::assert_response(
         response,
         StatusCode::BAD_REQUEST,
@@ -186,7 +249,7 @@ async fn confirm_token_invalid(pool: PgPool) {
     .execute(&mut *conn)
     .await
     .expect("Cannot update confirmation to expired");
-    let response = send_request(&app, &token).await;
+    let response = send_request(&app, &token, &session_token).await;
     test::assert_response(
         response,
         StatusCode::BAD_REQUEST,
@@ -195,8 +258,11 @@ async fn confirm_token_invalid(pool: PgPool) {
     .await;
 }
 
-async fn send_request(app: &Router, token: &str) -> Response {
+async fn send_request(app: &Router, token: &str, session_token: &str) -> Response {
     let data = json!({});
-    let request = test::build_request(&format!("/confirm/{}", token), http::Method::GET, &data);
+    let mut request = test::build_request(&format!("/confirm/{}", token), http::Method::GET, &data);
+    if !session_token.is_empty() {}
+    let session_header = HeaderValue::from_str(session_token).unwrap();
+    request.headers_mut().insert(AUTHORIZATION, session_header);
     app.clone().oneshot(request).await.unwrap()
 }
