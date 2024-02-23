@@ -34,7 +34,7 @@ pub async fn create_new_session(
 pub async fn user_from_session(
     transaction: &mut PgConnection,
     token: String,
-) -> Result<User, UserError> {
+) -> Result<(User, Uuid), UserError> {
     let (identifier, verifier) =
         token
             .split_once('.')
@@ -95,7 +95,7 @@ pub async fn user_from_session(
         .await
         .map_err(UserError::UserFetchError)?;
 
-    Ok(user)
+    Ok((user, session.identifier))
 }
 
 #[tracing::instrument(name = "Deleting session for id", skip(transaction))]

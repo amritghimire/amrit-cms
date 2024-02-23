@@ -19,7 +19,7 @@ pub async fn confirm(
     user: LoggedInUser,
 ) -> Result<impl IntoResponse, ErrorPayload> {
     let pool = &state.connection;
-    let LoggedInUser { user } = user;
+    let LoggedInUser { user, .. } = user;
 
     tracing::info!("starting confirmation token");
     let mut transaction = pool.begin().await.map_err(UserRegistrationError::Pool)?;

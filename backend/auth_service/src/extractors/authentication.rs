@@ -11,40 +11,30 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum_extra::extract::{cookie::Key, SignedCookieJar};
+use uuid::Uuid;
 
 use utils::errors::ErrorPayload;
 use utils::state::AppState;
 
 pub struct LoggedInUser {
+    pub session: Uuid,
     pub user: User,
 }
 
 pub struct AuthenticatedUser {
+    pub session: Uuid,
     pub user: User,
 }
 
 pub struct AuthenticationHeaderUser {
+    pub session: Uuid,
     pub user: User,
 }
 
-impl From<User> for LoggedInUser {
-    fn from(user: User) -> Self {
-        Self { user }
-    }
-}
-
-impl From<User> for AuthenticationHeaderUser {
-    fn from(user: User) -> Self {
-        Self { user }
-    }
-}
-
-impl TryFrom<User> for AuthenticatedUser {
-    type Error = UserError;
-
-    fn try_from(user: User) -> Result<Self, Self::Error> {
+impl AuthenticatedUser {
+    pub fn new(user: User, session: Uuid) -> Result<Self, UserError> {
         if user.is_confirmed {
-            return Ok(Self { user });
+            return Ok(Self { user, session });
         }
         Err(UserError::UserNotVerified)
     }
@@ -58,11 +48,12 @@ impl FromRequestParts<AppState> for AuthenticatedUser {
         parts: &mut Parts,
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
-        let user = process_session_from_parts(parts, state, true).await;
-        if let Err(err) = user {
+        let result = process_session_from_parts(parts, state, true).await;
+        if let Err(err) = result {
             return Err(err.into_response());
         }
-        match AuthenticatedUser::try_from(user.unwrap()) {
+        let (user, session) = result.unwrap();
+        match AuthenticatedUser::new(user, session) {
             Ok(auth_user) => Ok(auth_user),
             Err(err) => Err(ErrorPayload::from_error(err).into_response()),
         }
@@ -79,7 +70,7 @@ impl FromRequestParts<AppState> for LoggedInUser {
     ) -> Result<Self, Self::Rejection> {
         let user = process_session_from_parts(parts, state, true).await;
         match user {
-            Ok(user) => Ok(user.into()),
+            Ok((user, session)) => Ok(LoggedInUser { session, user }),
             Err(err) => Err(err.into_response()),
         }
     }
@@ -93,9 +84,9 @@ impl FromRequestParts<AppState> for AuthenticationHeaderUser {
         parts: &mut Parts,
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
-        let user = process_session_from_parts(parts, state, false).await;
-        match user {
-            Ok(user) => Ok(user.into()),
+        let result = process_session_from_parts(parts, state, false).await;
+        match result {
+            Ok((user, session)) => Ok(AuthenticationHeaderUser { session, user }),
             Err(err) => Err(err.into_response()),
         }
     }
@@ -105,7 +96,7 @@ async fn process_session_from_parts(
     parts: &mut Parts,
     state: &AppState,
     cookie: bool,
-) -> Result<User, ErrorPayload> {
+) -> Result<(User, Uuid), ErrorPayload> {
     let headers = HeaderMap::from_request_parts(parts, state).await?;
     let mut token = "".to_string();
     if let Some(header) = headers.get(AUTHORIZATION) {
@@ -134,6 +125,6 @@ async fn process_session_from_parts(
 
     let pool = &state.connection;
     let mut transaction = pool.begin().await.map_err(UserRegistrationError::Pool)?;
-    let user = user_from_session(&mut transaction, token).await?;
-    Ok(user)
+    let result = user_from_session(&mut transaction, token).await?;
+    Ok(result)
 }
