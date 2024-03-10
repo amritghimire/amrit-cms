@@ -13,7 +13,7 @@ async fn health_check() {
     let response = app
         .oneshot(
             Request::builder()
-                .uri("/health_check")
+                .uri("/api/health_check")
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -46,7 +46,7 @@ async fn check_for_server() {
     let response = client
         .request(
             Request::builder()
-                .uri(format!("http://{}/health_check", addr))
+                .uri(format!("http://{}/api/health_check", addr))
                 .body(Body::empty())
                 .unwrap(),
         )

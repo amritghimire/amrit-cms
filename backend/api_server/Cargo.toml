@@ -21,6 +21,12 @@ subscription_service = {path="../subscription_service"}
 auth_service = {path="../auth_service"}
 sqlx.workspace = true
 
+# Frontend
+dioxus.workspace = true
+dioxus-fullstack.workspace = true
+client = {path = "../../frontend/client"}
+
+
 [dev-dependencies]
 hyper-util.workspace=true
 http-body-util.workspace=true

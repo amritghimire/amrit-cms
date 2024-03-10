@@ -2,6 +2,9 @@ use crate::apps::applications;
 use crate::handlers;
 use axum::routing::method_routing::get;
 use axum::routing::Router;
+use client::client_app;
+use dioxus::prelude::VirtualDom;
+use dioxus_fullstack::prelude::{DioxusRouterExt, ServeConfig, ServeConfigBuilder};
 use tower::ServiceBuilder;
 use tower_http::request_id::MakeRequestUuid;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
@@ -30,12 +33,16 @@ pub async fn create_router() -> Router {
         // propagate the header to the response before the response reaches `TraceLayer`
         .propagate_x_request_id();
 
-    let mut router = Router::new().merge(base_routes());
+    let mut api_router = Router::new().merge(base_routes());
     for app in apps {
-        router = app.add_routes(router);
+        api_router = app.add_routes(api_router);
     }
+
+    let router = Router::new().nest("/api", api_router.fallback(handlers::not_found));
     router
-        .fallback(handlers::not_found)
+        .serve_dioxus_application(ServeConfig::builder().build(), || {
+            VirtualDom::new(client_app)
+        })
         .with_state(app_state)
         .layer(svc)
 }
