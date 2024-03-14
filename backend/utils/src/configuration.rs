@@ -58,6 +58,7 @@ pub struct Settings {
     pub database: DatabaseSettings,
     pub application: ApplicationSettings,
     pub email: EmailSettings,
+    pub frontend: FrontendSettings,
 }
 
 #[derive(Clone, Debug, serde::Deserialize)]
@@ -92,6 +93,11 @@ pub struct ApplicationSettings {
     pub host: String,
     pub scheme: Option<String>,
     pub key: String,
+}
+
+#[derive(Clone, Debug, serde::Deserialize)]
+pub struct FrontendSettings {
+    pub assets: String,
 }
 
 impl ApplicationSettings {

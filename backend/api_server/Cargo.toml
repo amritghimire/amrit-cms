@@ -24,6 +24,7 @@ sqlx.workspace = true
 # Frontend
 dioxus.workspace = true
 dioxus-fullstack.workspace = true
+dioxus-ssr.workspace = true
 client = {path = "../../frontend/client"}
 
 
@@ -44,3 +45,6 @@ name = "api_server"
 plugin = false
 proc-macro = false
 required-features = []
+
+[features]
+server = []

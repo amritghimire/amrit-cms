@@ -7,3 +7,6 @@ edition = "2021"
 
 [dependencies]
 dioxus.workspace = true
+dioxus-web.workspace = true
+wasm-logger.workspace = true
+console_error_panic_hook.workspace = true

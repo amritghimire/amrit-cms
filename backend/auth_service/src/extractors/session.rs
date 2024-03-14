@@ -36,7 +36,7 @@ impl UserSession {
                 verifier_hash,
                 user_id,
                 extra_info,
-                expiration_date: Utc::now() + Duration::days(30),
+                expiration_date: Utc::now() + Duration::try_days(30).unwrap(),
             },
             token,
         )
@@ -47,8 +47,8 @@ impl UserSession {
     }
 
     pub fn should_extend(&mut self) -> bool {
-        if self.expiration_date < Utc::now() + Duration::days(25) {
-            self.expiration_date = Utc::now() + Duration::days(30);
+        if self.expiration_date < Utc::now() + Duration::try_days(25).unwrap() {
+            self.expiration_date = Utc::now() + Duration::try_days(30).unwrap();
             return true;
         }
         false

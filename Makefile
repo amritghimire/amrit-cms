@@ -12,6 +12,7 @@ check:
 
 .PHONY: run
 run:
+	cd frontend/client && trunk build
 	cargo watch -x 'run -p api_server'
 
 .PHONY: watch
@@ -69,6 +70,15 @@ check_sqlx:
 docker:
 	docker build --tag amrit_cms --file Dockerfile .
 	docker run --env DATABASE_URL="$(DATABASE_URL)" -p 8080:8080  amrit_cms
+
+.PHONY: build_frontend
+build_frontend:
+	cd frontend/client && trunk build
+
+.PHONY: build_frontend_release
+build_frontend_release:
+	cd frontend/client && trunk build --release
+
 
 %:
 	@:

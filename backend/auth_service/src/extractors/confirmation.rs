@@ -66,7 +66,7 @@ impl Confirmation {
                 verifier_hash,
                 user_id,
                 created_at: Utc::now(),
-                expires_at: Utc::now() + Duration::hours(24),
+                expires_at: Utc::now() + Duration::try_hours(24).unwrap(),
                 action_type,
             },
             token,

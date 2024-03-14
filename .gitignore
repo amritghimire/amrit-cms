@@ -3,3 +3,4 @@ target
 config/local.yaml
 /.env
 report.json
+frontend/client/dist

@@ -243,7 +243,7 @@ async fn confirm_token_invalid(pool: PgPool) {
     // Expired token
     sqlx::query!(
         "update confirmations set expires_at = $1 where confirmation_id = $2",
-        Utc::now() - Duration::days(2),
+        Utc::now() - Duration::try_days(2).unwrap(),
         confirmation.confirmation_id
     )
     .execute(&mut *conn)

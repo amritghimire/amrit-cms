@@ -68,3 +68,7 @@ regex = "1.7.1"
 # Frontend dependencies
 dioxus = "0.5.0-alpha.0"
 dioxus-fullstack = { version = "0.5.0-alpha.0", features = ["axum", "dioxus-ssr"] }
+dioxus-ssr = { version = "0.5.0-alpha.0", features = [] }
+dioxus-web = {version =  "0.5.0-alpha.0", features = ["hydrate"] }
+wasm-logger = "0.2.0"
+console_error_panic_hook = "0.1.7"

@@ -8,6 +8,8 @@ use api_server::routes::create_router;
 
 #[tokio::test]
 async fn health_check() {
+    std::env::set_var("RUN_MODE", "test");
+
     let app = create_router().await;
 
     let response = app
@@ -29,6 +31,8 @@ async fn health_check() {
 // You can also spawn a server and talk to it like any other HTTP server:
 #[tokio::test]
 async fn check_for_server() {
+    std::env::set_var("RUN_MODE", "test");
+
     let listener = tokio::net::TcpListener::bind("0.0.0.0:0".parse::<SocketAddr>().unwrap())
         .await
         .unwrap();
