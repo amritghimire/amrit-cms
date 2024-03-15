@@ -1,1 +1,4 @@
 name = "amritghimire"
+assets = [
+    "frontend/client/dist/*", # include all files and subdirs in frontend/dist/
+]

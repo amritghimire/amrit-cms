@@ -19,6 +19,11 @@ run: build_frontend
 	cd frontend/client && trunk build
 	cargo run -p api_server --no-default-features --features local
 
+.PHONY: run_api
+run_api:
+	cargo run -p api_server --no-default-features --features local
+
+
 .PHONY: release
 release: build_frontend_release
 	cargo build --release  --no-default-features --features local
