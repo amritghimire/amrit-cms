@@ -36,6 +36,8 @@ jobs:
           override: true
       - name: Migrate database
         run: make migrate
+      - name: Make frontend build
+        run: make build_frontend
       - run: make test
 
   fmt:
@@ -89,4 +91,6 @@ jobs:
       - run: cargo install cargo-tarpaulin
       - uses: Swatinem/rust-cache@v1
       - run: make migrate
+      - name: Make frontend build
+        run: make build_frontend
       - run: make coverage
