@@ -38,7 +38,7 @@ pub async fn create_router(pool: PgPool) -> Router {
         api_router = app.add_routes(api_router);
     }
 
-    println!(
+    tracing::info!(
         "{}/index.html from {:?}",
         serve_dir_path,
         std::env::current_dir()
