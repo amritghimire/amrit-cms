@@ -2,9 +2,13 @@ FROM rust:1.77.0-alpine3.19 as chef
 
 RUN apk add --no-cache alpine-sdk
 RUN apk add openssl-dev
-RUN cargo install cargo-chef
-RUN cargo install trunk
 RUN rustup target add wasm32-unknown-unknown
+
+RUN cargo install cargo-chef
+RUN cargo install --locked wasm-bindgen-cli
+RUN wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.19.1/trunk-aarch64-unknown-linux-musl.tar.gz | tar -xzf-
+RUN mv ./trunk /usr/bin/
+
 WORKDIR app
 
 FROM chef AS planner
@@ -45,7 +49,7 @@ RUN apk add --update openssl ca-certificates && \
 
 COPY --from=builder /app/target/release/api_server api_server
 COPY config config
-COPY --from=builder frontend/client/dist assets
+COPY --from=builder /app/frontend/client/dist assets
 
 ENV DATABASE_URL $DATABASE_URL
 ENV APP_APPLICATION__PORT $PORT
