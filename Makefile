@@ -14,6 +14,10 @@ check:
 run: build_frontend
 	cargo watch -x 'run -p api_server'
 
+.PHONY: run_release
+run_release: build_frontend_release
+	cargo run -p api_server
+
 .PHONY: watch
 watch:
 	cargo watch -x check -x test -x 'run -p api_server'

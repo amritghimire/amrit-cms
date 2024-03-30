@@ -1,7 +1,10 @@
-FROM rust:1.67.1-alpine3.17 as chef
+FROM rust:1.77.0-alpine3.19 as chef
 
 RUN apk add --no-cache alpine-sdk
+RUN apk add openssl-dev
 RUN cargo install cargo-chef
+RUN cargo install trunk
+RUN rustup target add wasm32-unknown-unknown
 WORKDIR app
 
 FROM chef AS planner
@@ -25,9 +28,10 @@ COPY . .
 
 ENV SQLX_OFFLINE true
 ENV RUN_MODE production
+RUN cd frontend/client && trunk build --release
 RUN cargo build --release
 
-FROM alpine:3.17.2 as runtime
+FROM alpine:3.19 as runtime
 
 ARG DATABASE_URL
 ARG PORT=8080
@@ -41,9 +45,11 @@ RUN apk add --update openssl ca-certificates && \
 
 COPY --from=builder /app/target/release/api_server api_server
 COPY config config
+COPY frontend/client/dist assets
 
 ENV DATABASE_URL $DATABASE_URL
 ENV APP_APPLICATION__PORT $PORT
 ENV RUN_MODE production
+ENV APP_FRONTEND__ASSETS assets
 
 ENTRYPOINT ["./api_server"]
