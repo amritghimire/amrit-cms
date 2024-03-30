@@ -45,7 +45,7 @@ RUN apk add --update openssl ca-certificates && \
 
 COPY --from=builder /app/target/release/api_server api_server
 COPY config config
-COPY frontend/client/dist assets
+COPY --from=builder frontend/client/dist assets
 
 ENV DATABASE_URL $DATABASE_URL
 ENV APP_APPLICATION__PORT $PORT
