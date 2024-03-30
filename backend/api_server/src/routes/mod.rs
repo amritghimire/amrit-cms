@@ -1,16 +1,19 @@
+mod client;
+
 use crate::apps::applications;
 use crate::handlers;
+use axum::handler::HandlerWithoutStateExt;
 use axum::routing::method_routing::get;
 use axum::routing::Router;
-use dioxus::prelude::*;
+
+use crate::routes::client::serve_frontend;
 use tower::ServiceBuilder;
 use tower_http::request_id::MakeRequestUuid;
+use tower_http::services::ServeDir;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 use tower_http::ServiceBuilderExt;
 use utils::configuration::Settings;
 use utils::state::AppState;
-
-use dioxus_fullstack::prelude::*;
 
 pub fn base_routes() -> Router<AppState> {
     Router::new().route("/health_check", get(handlers::health_check))
@@ -39,17 +42,14 @@ pub async fn create_router() -> Router {
         api_router = app.add_routes(api_router);
     }
 
-    println!(
+    tracing::info!(
         "{}/index.html from {:?}",
-        serve_dir_path,
+        &serve_dir_path,
         std::env::current_dir()
     );
-    let serve_config = ServeConfig::builder()
-        .index_path(format!("{}/index.html", serve_dir_path).into())
-        .assets_path(serve_dir_path.into());
 
     let router = Router::new()
         .nest("/api", api_router.fallback(handlers::not_found))
-        .serve_dioxus_application(serve_config.build(), || VirtualDom::new(client::app::app));
+        .fallback_service(ServeDir::new(serve_dir_path).fallback(serve_frontend.into_service()));
     router.with_state(app_state).layer(svc)
 }

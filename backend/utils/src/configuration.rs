@@ -93,6 +93,7 @@ pub struct ApplicationSettings {
     pub host: String,
     pub scheme: Option<String>,
     pub key: String,
+    pub name: String,
 }
 
 #[derive(Clone, Debug, serde::Deserialize)]

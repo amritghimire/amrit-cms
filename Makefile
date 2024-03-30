@@ -11,13 +11,16 @@ check:
 	cargo check
 
 .PHONY: run
-run:
-	cd frontend/client && trunk build
+run: build_frontend
 	cargo watch -x 'run -p api_server'
 
 .PHONY: watch
 watch:
 	cargo watch -x check -x test -x 'run -p api_server'
+
+.PHONY: watch_frontend
+watch_frontend:
+	cd frontend/client && trunk watch
 
 .PHONY: coverage
 coverage:
@@ -72,13 +75,16 @@ docker:
 	docker run --env DATABASE_URL="$(DATABASE_URL)" -p 8080:8080  amrit_cms
 
 .PHONY: build_frontend
-build_frontend:
+build_frontend: build_tailwind
 	cd frontend/client && trunk build
 
 .PHONY: build_frontend_release
-build_frontend_release:
+build_frontend_release: build_tailwind
 	cd frontend/client && trunk build --release
 
 
+.PHONY: build_tailwind
+build_tailwind:
+	echo 1
 %:
 	@:

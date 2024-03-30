@@ -15,22 +15,20 @@ tower-http.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 uuid.workspace = true
-utils = {path="../utils"}
-util_macros = {path= "../util_macros" }
-subscription_service = {path="../subscription_service"}
-auth_service = {path="../auth_service"}
+utils = { path = "../utils" }
+util_macros = { path = "../util_macros" }
+subscription_service = { path = "../subscription_service" }
+auth_service = { path = "../auth_service" }
 sqlx.workspace = true
 
 # Frontend
-dioxus.workspace = true
-dioxus-fullstack.workspace = true
-dioxus-ssr.workspace = true
-client = {path = "../../frontend/client"}
+client = { path = "../../frontend/client" }
+sycamore = { version = "0.8.2", features = ["ssr"] }
 
 
 [dev-dependencies]
-hyper-util.workspace=true
-http-body-util.workspace=true
+hyper-util.workspace = true
+http-body-util.workspace = true
 
 
 [lib]
