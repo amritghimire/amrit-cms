@@ -60,6 +60,10 @@ jobs:
         uses: baptiste0928/cargo-install@v1
         with:
           crate: trunk
+      - name: Install Trunk
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: wasm-bindgen-cli
       - name: Run cargo build first
         run: cargo build --release
       - name: Build
