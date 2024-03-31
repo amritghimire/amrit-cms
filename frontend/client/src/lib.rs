@@ -13,7 +13,7 @@ pub enum AppRoutes {
 
 fn switch<'a, G: Html>(cx: Scope<'a>, route: &'a ReadSignal<AppRoutes>) -> View<G> {
     view! { cx,
-        div {
+        div(class="text-lg") {
             (match route.get().as_ref() {
                 AppRoutes::Index => view! { cx,
                    "Index page"
