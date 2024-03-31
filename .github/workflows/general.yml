@@ -63,7 +63,7 @@ jobs:
       - name: Run cargo build first
         run: cargo build --release
       - name: Build
-        run: trunk build --release --frontend/client/index.html
+        run: trunk build --release frontend/client/index.html
   
   fmt:
     name: Rustfmt
@@ -116,6 +116,4 @@ jobs:
       - run: cargo install cargo-tarpaulin
       - uses: Swatinem/rust-cache@v1
       - run: make migrate
-      - name: Make frontend build
-        run: make build_frontend
       - run: make coverage
