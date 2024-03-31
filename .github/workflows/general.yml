@@ -1,6 +1,6 @@
 name: Rust
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -36,10 +36,35 @@ jobs:
           override: true
       - name: Migrate database
         run: make migrate
-      - name: Make frontend build
-        run: make build_frontend
       - run: make test
 
+  frontend:
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    steps:
+      - uses: actions/checkout@v3
+
+      # selecting a toolchain either by action or manual `rustup` calls should happen
+      # before the plugin, as it uses the current rustc version as its cache key
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: default
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@v1
+      - run: rustup target add wasm32-unknown-unknown
+      - name: Install Trunk
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: trunk
+      - name: Run cargo build first
+        run: cargo build --release
+      - name: Build
+        run: trunk build --release --frontend/client/index.html
+  
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
@@ -67,7 +92,7 @@ jobs:
 
       - run: rustup component add clippy
       - uses: Swatinem/rust-cache@v1
-      - run:  export SQLX_OFFLINE=true;make clippy
+      - run: export SQLX_OFFLINE=true;make clippy
 
   coverage:
     name: Coverage
