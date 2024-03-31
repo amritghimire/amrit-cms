@@ -1,5 +1,4 @@
 use client::App;
-use sycamore::prelude::*;
 
 fn main() {
     console_error_panic_hook::set_once();
@@ -13,5 +12,5 @@ fn main() {
         .unwrap()
         .unwrap();
 
-    sycamore::hydrate_to(|cx| view! { cx, App(None) }, &root);
+    sycamore::hydrate_to(|| App(None), &root);
 }

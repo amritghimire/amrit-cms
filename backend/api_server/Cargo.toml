@@ -23,7 +23,7 @@ sqlx.workspace = true
 
 # Frontend
 client = { path = "../../frontend/client" }
-sycamore = { version = "0.8.2", features = ["ssr"] }
+sycamore = { version = "0.9.0-beta.2", features = ["ssr"] }
 
 
 [dev-dependencies]

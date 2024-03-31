@@ -425,6 +425,7 @@ dependencies = [
 name = "client"
 version = "0.1.0"
 dependencies = [
+ "components",
  "console_error_panic_hook",
  "console_log",
  "log",
@@ -432,6 +433,14 @@ dependencies = [
  "sycamore-router",
  "wasm-bindgen",
  "web-sys",
+]
+
+[[package]]
+name = "components"
+version = "0.1.0"
+dependencies = [
+ "phf",
+ "sycamore",
 ]
 
 [[package]]
@@ -1026,7 +1035,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "http",
- "indexmap 2.2.1",
+ "indexmap",
  "slab",
  "tokio",
  "tokio-util",
@@ -1289,16 +1298,6 @@ name = "if_chain"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb56e1aa765b4b4f3aadfab769793b7087bb03a4ea4920644a6d238e2df5b9ed"
-
-[[package]]
-name = "indexmap"
-version = "1.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd070e393353796e801d209ad339e89596eb4c8d430d18ede6a1cced8fafbd99"
-dependencies = [
- "autocfg",
- "hashbrown 0.12.3",
-]
 
 [[package]]
 name = "indexmap"
@@ -1771,9 +1770,9 @@ dependencies = [
 
 [[package]]
 name = "paste"
-version = "1.0.11"
+version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d01a5bd0424d00070b0098dd17ebca6f961a959dead1dbcbbbc1d1cd8d3deeba"
+checksum = "de3145af08024dea9fa9914f381a17b8fc6034dfb00f3a84013f7ff43f29ed4c"
 
 [[package]]
 name = "pathdiff"
@@ -2422,9 +2421,9 @@ dependencies = [
 
 [[package]]
 name = "smallvec"
-version = "1.10.0"
+version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a507befe795404456341dfab10cef66ead4c041f62b8b11bbb92bffe5d0953e0"
+checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
 name = "socket2"
@@ -2508,7 +2507,7 @@ dependencies = [
  "futures-util",
  "hashlink",
  "hex",
- "indexmap 2.2.1",
+ "indexmap",
  "log",
  "memchr",
  "once_cell",
@@ -2747,14 +2746,14 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "sycamore"
-version = "0.8.2"
+version = "0.9.0-beta.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67817393b3c9828db84614f64db9a1ebb94729ce3a3751c41e7ff23d3f8e7f00"
+checksum = "250e61fa06cb94006566d2d94dde27d894117d7a902bff3448db10a1c17f2109"
 dependencies = [
- "ahash 0.7.6",
  "futures",
+ "hashbrown 0.14.3",
  "html-escape",
- "indexmap 1.9.3",
+ "indexmap",
  "js-sys",
  "once_cell",
  "paste",
@@ -2770,21 +2769,23 @@ dependencies = [
 
 [[package]]
 name = "sycamore-core"
-version = "0.8.2"
+version = "0.9.0-beta.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2dce7f0440c5ea2b74a544deb5423708c023fade36e63515423d3f3ab5e1a998"
+checksum = "95e83d3e19b2b8cf64cf93579cbcc8f8ee61b41568cf87c12e607ca46c95fd75"
 dependencies = [
- "ahash 0.7.6",
+ "hashbrown 0.14.3",
+ "sycamore-futures",
  "sycamore-reactive",
 ]
 
 [[package]]
 name = "sycamore-futures"
-version = "0.8.0"
+version = "0.9.0-beta.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a69e4f2b65a22059f711cb36adc454791248e9abdc0b6b04c5dda396098674f2"
+checksum = "9440b458b126ace2428d6f28d148722b3d2833ee4c32440305b38f0a8fac1e11"
 dependencies = [
  "futures",
+ "pin-project",
  "sycamore-reactive",
  "tokio",
  "wasm-bindgen-futures",
@@ -2792,34 +2793,33 @@ dependencies = [
 
 [[package]]
 name = "sycamore-macro"
-version = "0.8.2"
+version = "0.9.0-beta.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f3abd3f402c1a943cf70860b91a40c79c713e269156445998dbfd647deac8a5"
+checksum = "7cdd75832586b8c4642f30c90d3e50395e4f755c55761eab555df6a80edb1fc1"
 dependencies = [
  "once_cell",
  "proc-macro2",
  "quote",
- "syn 1.0.107",
+ "rand",
+ "syn 2.0.48",
 ]
 
 [[package]]
 name = "sycamore-reactive"
-version = "0.8.1"
+version = "0.9.0-beta.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6376b578ad32f5f3ab6943bccec906fb0e1f0258a8bedf811afdec8c3330ef80"
+checksum = "315747f150cdb19424d451126c68534585619ef00e85443fe677ee9ec698ecd0"
 dependencies = [
- "ahash 0.7.6",
- "bumpalo",
- "indexmap 1.9.3",
+ "paste",
  "slotmap",
  "smallvec",
 ]
 
 [[package]]
 name = "sycamore-router"
-version = "0.8.0"
+version = "0.9.0-beta.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "123b34a150dac877d7bfae82dadfb0c586fd35a8f5fcdf1721dafa079fdc4c40"
+checksum = "9fc902881e84b7aa0f7fc266df4ea353c20ee052d9efd95302330f1cedb99f02"
 dependencies = [
  "sycamore",
  "sycamore-router-macro",
@@ -2829,25 +2829,26 @@ dependencies = [
 
 [[package]]
 name = "sycamore-router-macro"
-version = "0.8.0"
+version = "0.9.0-beta.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92914a2f809b636d245b28d8a734801ecb8ff9c4996bbe6ea4176582e12503eb"
+checksum = "976ed3788c00e06c6694bedf06496f4cb5d17beaa72b2c4efc0ee0e88f302c6b"
 dependencies = [
  "nom",
  "proc-macro2",
  "quote",
- "syn 1.0.107",
+ "syn 2.0.48",
  "unicode-xid",
 ]
 
 [[package]]
 name = "sycamore-web"
-version = "0.8.2"
+version = "0.9.0-beta.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6db9520735f765e60718df8125eb27db19b990bed1116c9b3e8aae374dde1fe8"
+checksum = "06ed5bbbd89ea2398e90d058f477855bdbe3f5296e7cc36f356e99ee5f9b5967"
 dependencies = [
+ "hashbrown 0.14.3",
  "html-escape",
- "indexmap 1.9.3",
+ "indexmap",
  "js-sys",
  "once_cell",
  "sycamore-core",

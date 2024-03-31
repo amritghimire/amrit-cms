@@ -3,7 +3,9 @@
 use sycamore::prelude::*;
 use sycamore_router::{HistoryIntegration, Route, Router, StaticRouter};
 
-#[derive(Route, Clone)]
+use components::nav;
+
+#[derive(Route, Clone, Copy)]
 pub enum AppRoutes {
     #[to("/")]
     Index,
@@ -11,14 +13,15 @@ pub enum AppRoutes {
     NotFound,
 }
 
-fn switch<'a, G: Html>(cx: Scope<'a>, route: &'a ReadSignal<AppRoutes>) -> View<G> {
-    view! { cx,
-        div(class="text-lg") {
-            (match route.get().as_ref() {
-                AppRoutes::Index => view! { cx,
+fn switch<G: Html>(route: ReadSignal<AppRoutes>) -> View<G> {
+    view! {
+        div {
+            nav::Navbar()
+            (match route.get() {
+                AppRoutes::Index => view! {
                    "Index page"
                 },
-                AppRoutes::NotFound => view! { cx,
+                AppRoutes::NotFound => view! {
                     "404 Not Found"
                 },
             })
@@ -29,18 +32,18 @@ fn switch<'a, G: Html>(cx: Scope<'a>, route: &'a ReadSignal<AppRoutes>) -> View<
 /// # Props
 /// * `pathname` - Set to `Some(_)` if running on the server.
 #[component]
-pub fn App<G: Html>(cx: Scope, pathname: Option<String>) -> View<G> {
+pub fn App<G: Html>(pathname: Option<String>) -> View<G> {
     match pathname {
         Some(pathname) => {
             let route = AppRoutes::default().match_path(&pathname);
-            view! { cx,
+            view! {
                 StaticRouter(
                     view=switch,
                     route=route,
                 )
             }
         }
-        None => view! { cx,
+        None => view! {
             Router(
                 view=switch,
                 integration=HistoryIntegration::new(),

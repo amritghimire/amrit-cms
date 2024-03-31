@@ -6,7 +6,7 @@ use axum::handler::HandlerWithoutStateExt;
 use axum::routing::method_routing::get;
 use axum::routing::Router;
 
-use crate::routes::client::serve_frontend;
+use crate::routes::client::{frontend_index, serve_frontend};
 use tower::ServiceBuilder;
 use tower_http::request_id::MakeRequestUuid;
 use tower_http::services::ServeDir;
@@ -49,6 +49,7 @@ pub async fn create_router() -> Router {
     );
 
     let router = Router::new()
+        .route("/", get(frontend_index))
         .nest("/api", api_router.fallback(handlers::not_found))
         .fallback_service(ServeDir::new(serve_dir_path).fallback(serve_frontend.into_service()));
     router.with_state(app_state).layer(svc)

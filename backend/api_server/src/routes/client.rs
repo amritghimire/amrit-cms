@@ -3,8 +3,12 @@ use axum::response::Html;
 use utils::configuration::Settings;
 
 use client::App;
-use sycamore::prelude::*;
 use tokio::fs;
+
+pub async fn frontend_index() -> (StatusCode, Html<String>) {
+    let uri = Uri::from_static("/");
+    serve_frontend(uri).await
+}
 
 pub async fn serve_frontend(uri: Uri) -> (StatusCode, Html<String>) {
     let settings = Settings::new().expect("Failed to read configuration");
@@ -16,11 +20,17 @@ pub async fn serve_frontend(uri: Uri) -> (StatusCode, Html<String>) {
         std::env::current_dir()
     );
 
+    let index_information = format!(
+        "{}/index.html from {:?}",
+        &serve_dir_path,
+        std::env::current_dir()
+    );
+
     let index_file = fs::read(format!("{}/index.html", &serve_dir_path)).await;
     if index_file.is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Html("Unable to build index".into()),
+            Html(format!("Unable to build index: {}", index_information)),
         );
     }
     let index_file = index_file.unwrap();
@@ -28,16 +38,15 @@ pub async fn serve_frontend(uri: Uri) -> (StatusCode, Html<String>) {
     if index_html.is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Html("Unable to build index from utf8".into()),
+            Html(format!(
+                "Unable to build index from utf8: {}",
+                index_information
+            )),
         );
     }
     let index_html = index_html.unwrap();
 
-    let rendered = sycamore::render_to_string(|cx| {
-        view! { cx,
-            App(Some(uri.to_string()))
-        }
-    });
+    let rendered = sycamore::render_to_string(|| App(Some(uri.to_string())));
 
     let index_html = index_html.replace("%sycamore.body", &rendered);
 
