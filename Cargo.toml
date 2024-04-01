@@ -50,7 +50,7 @@ once_cell = "1.17.1"
 tracing-log = "0.2.0"
 tower-http = { version = "0.5.1", features = ["request-id", "trace", "util", "fs"], optional = false, default-features = false }
 tracing-subscriber = { version = "0.3.16", features = ["env-filter", "registry", "tracing-log"], optional = false }
-config = "0.13.3"
+config = "0.14.0"
 secrecy = { version = "0.8.0", features = ["serde"] }
 lettre = { version = "0.11.4", features = ["tracing", "tokio1-native-tls", "tokio1"] }
 anyhow = "1.0.69"
