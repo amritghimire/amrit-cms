@@ -1,53 +1,70 @@
 #![allow(non_snake_case)]
 
-use sycamore::prelude::*;
-use sycamore_router::{HistoryIntegration, Route, Router, StaticRouter};
+use dioxus::prelude::*;
 
-use components::nav;
+// Urls are relative to your Cargo.toml file
+const _TAILWIND_URL: &str = manganis::mg!(file("assets/tailwind.css"));
 
-#[derive(Route, Clone, Copy)]
-pub enum AppRoutes {
-    #[to("/")]
-    Index,
-    #[not_found]
-    NotFound,
+#[derive(Clone, Routable, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+enum Route {
+    #[route("/")]
+    Home {},
+    #[route("/blog/:id")]
+    Blog { id: i32 },
 }
 
-fn switch<G: Html>(route: ReadSignal<AppRoutes>) -> View<G> {
-    view! {
-        div {
-            nav::Navbar()
-            (match route.get() {
-                AppRoutes::Index => view! {
-                   "Index page"
-                },
-                AppRoutes::NotFound => view! {
-                    "404 Not Found"
-                },
-            })
-        }
+pub fn App() -> Element {
+    rsx! {
+        Router::<Route> {}
     }
 }
 
-/// # Props
-/// * `pathname` - Set to `Some(_)` if running on the server.
 #[component]
-pub fn App<G: Html>(pathname: Option<String>) -> View<G> {
-    match pathname {
-        Some(pathname) => {
-            let route = AppRoutes::default().match_path(&pathname);
-            view! {
-                StaticRouter(
-                    view=switch,
-                    route=route,
-                )
-            }
-        }
-        None => view! {
-            Router(
-                view=switch,
-                integration=HistoryIntegration::new(),
-            )
-        },
+fn Blog(id: i32) -> Element {
+    rsx! {
+        Link { to: Route::Home {}, "Go to counter" }
+        "Blog post {id}"
     }
+}
+
+#[component]
+fn Home() -> Element {
+    let mut count = use_signal(|| 0);
+    let mut text = use_signal(|| String::from("..."));
+
+    rsx! {
+        Link {
+            to: Route::Blog {
+                id: count()
+            },
+            "Go to blog"
+        }
+        div {
+            h1 { "High-Five counter: {count}" }
+            button { onclick: move |_| count += 1, "Up high!" }
+            button { onclick: move |_| count -= 1, "Down low!" }
+            button {
+                onclick: move |_| async move {
+                    if let Ok(data) = get_server_data().await {
+                        log::info!("Client received: {}", data);
+                        text.set(data.clone());
+                        post_server_data(data).await.unwrap();
+                    }
+                },
+                "Get Server Data"
+            }
+            p { "Server data: {text}"}
+        }
+    }
+}
+
+#[server(PostServerData)]
+async fn post_server_data(data: String) -> Result<(), ServerFnError> {
+    println!("Server received: {}", data);
+    Ok(())
+}
+
+#[server(GetServerData)]
+async fn get_server_data() -> Result<String, ServerFnError> {
+    Ok("Hello from the server!".to_string())
 }

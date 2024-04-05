@@ -1,16 +1,13 @@
+#![allow(non_snake_case)]
+
 use client::App;
+use dioxus::prelude::*;
+use log::LevelFilter;
 
 fn main() {
-    console_error_panic_hook::set_once();
-    console_log::init_with_level(log::Level::Debug).unwrap();
-
-    let root = web_sys::window()
-        .unwrap()
-        .document()
-        .unwrap()
-        .query_selector("#sycamore")
-        .unwrap()
-        .unwrap();
-
-    sycamore::hydrate_to(|| App(None), &root);
+    // Init debug
+    dioxus_logger::init(LevelFilter::Info).expect("failed to init logger");
+    LaunchBuilder::new()
+        .with_cfg(dioxus::web::Config::new().hydrate(true))
+        .launch(App);
 }

@@ -2,7 +2,7 @@
 members = [
     "common/translations",
     "backend/api_server", "backend/auth_service", "backend/subscription_service",
-    "backend/utils", "backend/util_macros", "frontend/client", "frontend/components"]
+    "backend/utils", "backend/util_macros"]
 resolver = "2"
 
 [profile.release]

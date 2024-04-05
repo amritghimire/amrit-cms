@@ -24,7 +24,7 @@ watch:
 
 .PHONY: watch_frontend
 watch_frontend:
-	cd frontend/client && trunk watch
+	cd frontend/client && dx serve --platform web
 
 .PHONY: coverage
 coverage:
@@ -80,15 +80,15 @@ docker:
 
 .PHONY: build_frontend
 build_frontend: build_tailwind
-	cd frontend/client && trunk build
+	dx build --bin client
 
 .PHONY: build_frontend_release
 build_frontend_release: build_tailwind
-	cd frontend/client && trunk build --release
+	dx build --release --bin client
 
 
 .PHONY: build_tailwind
 build_tailwind:
-	echo 1
+	npx tailwindcss -i ./frontend/client/input.css -o ./frontend/client/assets/tailwind.css
 %:
 	@:

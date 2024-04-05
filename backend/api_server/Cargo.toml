@@ -22,8 +22,8 @@ auth_service = { path = "../auth_service" }
 sqlx.workspace = true
 
 # Frontend
-client = { path = "../../frontend/client" }
-sycamore = { version = "0.9.0-beta.2", features = ["ssr"] }
+client = { path = "../../frontend/client", default-features = false }
+dioxus = { version = "0.5", features = ["fullstack", "router", "axum"] }
 
 
 [dev-dependencies]
