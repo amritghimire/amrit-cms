@@ -14,7 +14,8 @@ RUN cargo chef prepare  --recipe-path recipe.json
 FROM rust:1.77.0 as frontend_base
 
 RUN rustup  target add wasm32-unknown-unknown wasm32-wasi
-RUN cargo install wasm-bindgen-cli cargo-chef trunk
+RUN cargo install cargo-chef dioxus-cli@0.5.1
+
 
 WORKDIR app
 
@@ -23,7 +24,7 @@ FROM frontend_base as frontend_builder
 
 COPY . .
 
-RUN trunk build --release frontend/client/index.html
+RUN dx build --bin client
 
 
 FROM chef as builder
