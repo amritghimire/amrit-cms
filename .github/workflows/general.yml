@@ -67,7 +67,7 @@ jobs:
       - name: Run cargo build first
         run: cargo build --release
       - name: Build
-        run: trunk build --release frontend/client/index.html
+        run: trunk build --release frontend/index.html
   
   fmt:
     name: Rustfmt

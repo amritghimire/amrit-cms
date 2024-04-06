@@ -147,7 +147,7 @@ pub fn handle_json_error<T>(
     payload: Result<Json<T>, JsonRejection>,
 ) -> Result<T, (StatusCode, ErrorPayload)> {
     match payload {
-        // if the client sent valid JSON then we're good
+        // if the frontend sent valid JSON then we're good
         Ok(Json(payload)) => Ok(payload),
 
         Err(err) => match err {

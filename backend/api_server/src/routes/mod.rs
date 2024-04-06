@@ -50,7 +50,7 @@ pub async fn create_router() -> Router {
 
     let router = Router::new()
         .nest("/api", api_router.fallback(handlers::not_found))
-        .serve_dioxus_application(serve_config, || VirtualDom::new(client::App))
+        .serve_dioxus_application(serve_config, || VirtualDom::new(frontend::App))
         .await;
     router.with_state(app_state).layer(svc)
 }

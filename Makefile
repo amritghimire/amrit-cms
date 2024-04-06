@@ -14,17 +14,22 @@ check:
 run: build_frontend
 	cargo watch -x 'run -p api_server'
 
+
 .PHONY: run_release
 run_release: build_frontend_release
 	cargo run -p api_server
 
 .PHONY: watch
-watch:
+watch: build_frontend
 	cargo watch -x check -x test -x 'run -p api_server'
+
+.PHONY: watch_backend
+watch_backend:
+	cargo watch -i frontend -x 'run -p api_server'
 
 .PHONY: watch_frontend
 watch_frontend:
-	cd frontend/client && trunk watch
+	cd frontend && cargo watch -- trunk build
 
 .PHONY: coverage
 coverage:
@@ -80,11 +85,11 @@ docker:
 
 .PHONY: build_frontend
 build_frontend:
-	cd frontend/client && trunk build
+	cd frontend && trunk build
 
 .PHONY: build_frontend_release
 build_frontend_release:
-	cd frontend/client && trunk build --release
+	cd frontend && trunk build --release
 
 %:
 	@:

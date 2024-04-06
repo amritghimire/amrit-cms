@@ -9,4 +9,4 @@ database:
   password: "password"
   database_name: "amrit_cms"
 frontend:
-  assets: "frontend/client/dist"
+  assets: "frontend/dist"

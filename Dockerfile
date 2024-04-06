@@ -24,7 +24,7 @@ FROM frontend_base as frontend_builder
 
 COPY . .
 
-RUN trunk build --release frontend/client/index.html
+RUN trunk build --release frontend/index.html
 
 
 FROM chef as builder
@@ -59,7 +59,7 @@ RUN apk add --update openssl ca-certificates && \
 
 COPY --from=builder /app/target/release/api_server api_server
 COPY config config
-COPY --from=frontend_builder /app/frontend/client/dist assets
+COPY --from=frontend_builder /app/frontend/dist assets
 
 ENV DATABASE_URL $DATABASE_URL
 ENV APP_APPLICATION__PORT $PORT

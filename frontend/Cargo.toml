@@ -1,5 +1,5 @@
 [package]
-name = "client"
+name = "frontend"
 version = "0.1.0"
 authors = ["Amrit Ghimire <mail@amritghimire.com>"]
 edition = "2021"
@@ -8,13 +8,15 @@ edition = "2021"
 
 [dependencies]
 serde = { version = "1.0.197", features = ["derive"] }
-
-dioxus = { version = "0.5", features = ["fullstack", "router", ] }
-manganis = "0.2.1"
+dioxus = { version = "0.5.1", features = ["fullstack", "router", ] }
+reqwest = { version = "0.12.3", features = ["json"] }
+serde_json.workspace = true
+web-sys = { version = "0.3.69", features = ["console"] }
 
 # Debug
 log = "0.4.19"
 dioxus-logger = "0.4.1"
+
 
 [features]
 default = ["dioxus/web"]

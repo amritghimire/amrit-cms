@@ -22,7 +22,7 @@ auth_service = { path = "../auth_service" }
 sqlx.workspace = true
 
 # Frontend
-client = { path = "../../frontend/client", default-features = false }
+frontend = { path = "../../frontend", default-features = false }
 dioxus = { version = "0.5", features = ["fullstack", "router", "axum"] }
 
 

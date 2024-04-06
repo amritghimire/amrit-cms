@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
-use client::App;
 use dioxus::prelude::*;
+use frontend::App;
 use log::LevelFilter;
 
 fn main() {
