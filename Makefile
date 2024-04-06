@@ -24,7 +24,7 @@ watch:
 
 .PHONY: watch_frontend
 watch_frontend:
-	cd frontend/client && dx serve --platform web
+	cd frontend/client && trunk watch
 
 .PHONY: coverage
 coverage:
@@ -79,16 +79,12 @@ docker:
 	docker run --env DATABASE_URL="$(DATABASE_URL)" -p 8080:8080  amrit_cms
 
 .PHONY: build_frontend
-build_frontend: build_tailwind
-	dx build --bin client
+build_frontend:
+	cd frontend/client && trunk build
 
 .PHONY: build_frontend_release
-build_frontend_release: build_tailwind
-	dx build --release --bin client
+build_frontend_release:
+	cd frontend/client && trunk build --release
 
-
-.PHONY: build_tailwind
-build_tailwind:
-	npx tailwindcss -i ./frontend/client/input.css -o ./frontend/client/assets/tailwind.css
 %:
 	@:

@@ -2,9 +2,6 @@
 
 use dioxus::prelude::*;
 
-// Urls are relative to your Cargo.toml file
-const _TAILWIND_URL: &str = manganis::mg!(file("assets/tailwind.css"));
-
 #[derive(Clone, Routable, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 enum Route {
     #[route("/")]
@@ -41,9 +38,15 @@ fn Home() -> Element {
         }
         div {
             h1 { "High-Five counter: {count}" }
-            button { onclick: move |_| count += 1, "Up high!" }
-            button { onclick: move |_| count -= 1, "Down low!" }
             button {
+                class: "bg-gray-200 px-4 py-2 rounded-lg border border-white hover:border-indigo-500 active:scale-95 transition-all",
+                onclick: move |_| count += 1, "Up high!"
+            }
+            button {
+                class: "bg-gray-200 px-4 py-2 rounded-lg border border-white hover:border-indigo-500 active:scale-95 transition-all",
+                onclick: move |_| count -= 1, "Down low!" }
+            button {
+                class: "bg-gray-200 px-4 py-2 rounded-lg border border-white hover:border-indigo-500 active:scale-95 transition-all",
                 onclick: move |_| async move {
                     if let Ok(data) = get_server_data().await {
                         log::info!("Client received: {}", data);

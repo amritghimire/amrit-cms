@@ -46,7 +46,6 @@ pub async fn create_router() -> Router {
     );
     let serve_config = ServeConfig::builder()
         .assets_path(serve_dir_path.clone().into())
-        .index_path(format!("{}/index.html", &serve_dir_path).into())
         .build();
 
     let router = Router::new()
