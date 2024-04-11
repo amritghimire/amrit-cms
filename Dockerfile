@@ -24,7 +24,7 @@ FROM frontend_base as frontend_builder
 
 COPY . .
 
-RUN trunk build --release frontend/index.html
+RUN cd frontend && trunk build --release --no-minification
 
 
 FROM chef as builder
