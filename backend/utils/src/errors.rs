@@ -92,7 +92,7 @@ impl ErrorPayload {
             });
         }
         json!({
-            key: field_value
+            key: [field_value]
         })
     }
 }

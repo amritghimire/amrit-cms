@@ -29,7 +29,7 @@ watch_backend:
 
 .PHONY: watch_frontend
 watch_frontend:
-	cd frontend && cargo watch -- trunk build
+	cd frontend && cargo watch -- trunk build --filehash false
 
 .PHONY: coverage
 coverage:
@@ -85,11 +85,15 @@ docker:
 
 .PHONY: build_frontend
 build_frontend:
-	cd frontend && trunk build
+	trunk build frontend/index.html
 
 .PHONY: build_frontend_release
 build_frontend_release:
-	cd frontend && trunk build --release
+	trunk build --release frontend/index.html
+
+.PHONY: watch_all
+watch_all: watch_frontend watch_backend
+	echo "Starting"
 
 %:
 	@:

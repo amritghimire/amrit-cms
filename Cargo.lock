@@ -1613,6 +1613,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "thiserror",
  "web-sys",
 ]
 
