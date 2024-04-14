@@ -2,7 +2,7 @@ use crate::errors::ErrorPayload;
 use dioxus::prelude::*;
 
 #[component]
-pub fn ErrorLine(field: String, error_payload: ReadOnlySignal<Option<ErrorPayload>>) -> Element {
+pub fn ErrorLine(field: String, error_payload: Signal<Option<ErrorPayload>>) -> Element {
     let error_message = use_memo(move || {
         error_payload
             .read()

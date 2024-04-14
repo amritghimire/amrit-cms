@@ -3,18 +3,20 @@ use crate::routes::Route;
 use crate::utils::api::sign_in::signin;
 use dioxus::prelude::*;
 
-use crate::components::error_line::{ErrorLine, OverallErrorLine};
+use crate::components::error_line::OverallErrorLine;
+use crate::components::input::InputField;
+use crate::entities::input::UserInput;
 
 #[component]
 pub fn SignInPage() -> Element {
     let mut error_message: Signal<Option<ErrorPayload>> = use_signal(|| None);
+    let mut user_input = use_signal(UserInput::new);
 
-    let onsubmit = move |evt: FormEvent| async move {
-        let username = &evt.values()["username"];
-        let password = &evt.values()["password"];
+    let onsubmit = move |_: FormEvent| async move {
         error_message.set(None);
+        let entry = user_input.read();
 
-        let response = signin(username.as_value(), password.as_value()).await;
+        let response = signin(entry.get("username"), entry.get("password")).await;
         if response.is_ok() {
             let nav = navigator();
             nav.replace(Route::Home {});
@@ -26,7 +28,7 @@ pub fn SignInPage() -> Element {
 
     rsx! {
         div { class: "flex min-h-full flex-col justify-center px-6 py-12 lg:px-8",
-        div { class: "sm:mx-auto sm:w-full sm:max-w-sm",
+        div { class: "sm:mx-auto sm:w-full sm:max-w-prose",
             img {
                 src: "https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600",
                 alt: "AmritCMS",
@@ -36,7 +38,7 @@ pub fn SignInPage() -> Element {
                 "Sign in to your account"
             }
         }
-        div { class: "mt-10 sm:mx-auto sm:w-full sm:max-w-sm",
+        div { class: "mt-10 sm:mx-auto sm:w-full sm:max-w-prose",
             form { onsubmit, class: "space-y-6",
                 OverallErrorLine {
                     error_payload: error_message
@@ -48,17 +50,14 @@ pub fn SignInPage() -> Element {
                         "Username"
                     }
                     div { class: "mt-2",
-                        input {
-                            required: "false",
+                        InputField {
+                            required: "true",
                             autocomplete: "username",
-                            name: "username",
-                            r#type: "username",
-                            class: "block w-full rounded-md border-0 p-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
-                            id: "username"
-                        }
-                        ErrorLine {
-                            field: "username",
-                            error_payload: error_message
+                            error_payload: error_message,
+                            identifier: "username",
+                            typ: "username",
+                            value: user_input.read().get("username"),
+                            oninput: move |event: Event<FormData>| user_input.write().set("username", event.value())
                         }
                     }
                }
@@ -78,17 +77,14 @@ pub fn SignInPage() -> Element {
                         }
                     }
                     div { class: "mt-2",
-                        input {
-                            name: "password",
-                            r#type: "password",
+                        InputField {
+                            required: "true",
                             autocomplete: "current-password",
-                            required: "false",
-                            class: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
-                            id: "password"
-                        }
-                        ErrorLine {
-                            field: "password",
-                            error_payload: error_message
+                            error_payload: error_message,
+                            identifier: "password",
+                            typ: "password",
+                            value: user_input.read().get("password"),
+                            oninput: move |event: Event<FormData>| user_input.write().set("password", event.value())
                         }
                     }
                 }

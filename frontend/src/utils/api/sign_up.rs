@@ -1,7 +1,7 @@
+use crate::entities::input::UserInput;
 use crate::entities::user::User;
-use dioxus::prelude::FormValue;
+use dioxus::prelude::{Readable, Signal};
 use serde::Serialize;
-use std::collections::HashMap;
 
 use crate::utils::api::post_request;
 use crate::Result;
@@ -15,14 +15,15 @@ pub struct RegistrationPayload {
     pub name: String,
 }
 
-impl From<&HashMap<String, FormValue>> for RegistrationPayload {
-    fn from(value: &HashMap<String, FormValue>) -> Self {
+impl From<Signal<UserInput>> for RegistrationPayload {
+    fn from(signal: Signal<UserInput>) -> Self {
+        let value = signal.read();
         Self {
-            username: value["username"].as_value(),
-            password: value["password"].as_value(),
-            confirm_password: value["confirm_password"].as_value(),
-            email: value["email"].as_value(),
-            name: value["name"].as_value(),
+            username: value.get("username"),
+            password: value.get("password"),
+            confirm_password: value.get("confirm_password"),
+            email: value.get("email"),
+            name: value.get("name"),
         }
     }
 }

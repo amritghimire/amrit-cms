@@ -25,7 +25,7 @@ watch: build_frontend
 
 .PHONY: watch_backend
 watch_backend:
-	cargo watch -i frontend -x 'run -p api_server'
+	cargo watch -x 'run -p api_server'
 
 .PHONY: watch_frontend
 watch_frontend:

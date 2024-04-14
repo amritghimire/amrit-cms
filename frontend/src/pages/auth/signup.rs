@@ -3,15 +3,17 @@ use crate::routes::Route;
 use crate::utils::api::sign_up::{signup, RegistrationPayload};
 use dioxus::prelude::*;
 
-use crate::components::error_line::{ErrorLine, OverallErrorLine};
+use crate::components::error_line::OverallErrorLine;
+use crate::components::input::InputField;
+use crate::entities::input::UserInput;
 
 #[component]
 pub fn SignUpPage() -> Element {
     let mut error_message: Signal<Option<ErrorPayload>> = use_signal(|| None);
+    let mut user_input = use_signal(UserInput::new);
 
-    let onsubmit = move |evt: FormEvent| async move {
-        let form_values = &evt.values();
-        let payload = RegistrationPayload::from(form_values);
+    let onsubmit = move |_: FormEvent| async move {
+        let payload = RegistrationPayload::from(user_input);
         error_message.set(None);
 
         let response = signup(payload).await;
@@ -26,7 +28,7 @@ pub fn SignUpPage() -> Element {
 
     rsx! {
         div { class: "flex min-h-full flex-col justify-center px-6 py-12 lg:px-8",
-            div { class: "sm:mx-auto sm:w-full sm:max-w-sm",
+            div { class: "sm:mx-auto sm:w-full sm:max-w-prose",
             img {
                 src: "https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600",
                 alt: "AmritCMS",
@@ -36,7 +38,7 @@ pub fn SignUpPage() -> Element {
                 "Create an account"
             }
         }
-        div { class: "mt-2 sm:mx-auto sm:w-full sm:max-w-sm",
+        div { class: "mt-2 sm:mx-auto sm:w-full sm:max-w-prose",
             form { onsubmit,
                 OverallErrorLine {
                     error_payload: error_message
@@ -54,20 +56,15 @@ pub fn SignUpPage() -> Element {
                                     "Username"
                                 }
                                 div { class: "mt-2",
-                                    div { class: "flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md",
-                                        input {
+                                        InputField {
+                                            required: "true",
                                             autocomplete: "username",
-                                            r#type: "text",
-                                            name: "username",
-                                            placeholder: "username",
-                                            class: "block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6",
-                                            id: "username"
+                                            error_payload: error_message,
+                                            identifier: "username",
+                                            typ: "username",
+                                            value: user_input.read().get("username"),
+                                            oninput: move |event: Event<FormData>| user_input.write().set("username", event.value())
                                         }
-                                    }
-                                    ErrorLine {
-                                        field: "username",
-                                        error_payload: error_message
-                                    }
                                 }
                             }
                         }
@@ -81,16 +78,14 @@ pub fn SignUpPage() -> Element {
                                     "Password"
                                 }
                                 div { class: "mt-2",
-                                    input {
+                                    InputField {
+                                        required: "true",
                                         autocomplete: "new-password",
-                                        r#type: "password",
-                                        name: "password",
-                                        class: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
-                                        id: "password"
-                                    }
-                                    ErrorLine {
-                                        field: "password",
-                                        error_payload: error_message
+                                        error_payload: error_message,
+                                        identifier: "password",
+                                        typ: "password",
+                                        value: user_input.read().get("password"),
+                                        oninput: move |event: Event<FormData>| user_input.write().set("password", event.value())
                                     }
                                 }
                             }
@@ -101,16 +96,14 @@ pub fn SignUpPage() -> Element {
                                     "Confirm Password"
                                 }
                                 div { class: "mt-2",
-                                    input {
-                                        name: "confirm_password",
+                                    InputField {
+                                        required: "true",
                                         autocomplete: "new-password",
-                                        r#type: "password",
-                                        class: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
-                                        id: "confirm_password"
-                                    }
-                                    ErrorLine {
-                                        field: "confirm_password",
-                                        error_payload: error_message
+                                        error_payload: error_message,
+                                        identifier: "confirm_password",
+                                        typ: "password",
+                                        value: user_input.read().get("confirm_password"),
+                                        oninput: move |event: Event<FormData>| user_input.write().set("confirm_password", event.value())
                                     }
                                 }
                             }
@@ -121,16 +114,14 @@ pub fn SignUpPage() -> Element {
                                     "Email address"
                                 }
                                 div { class: "mt-2",
-                                    input {
-                                        name: "email",
-                                        r#type: "email",
+                                    InputField {
+                                        required: "true",
                                         autocomplete: "email",
-                                        class: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
-                                        id: "email"
-                                    }
-                                    ErrorLine {
-                                        field: "email",
-                                        error_payload: error_message
+                                        error_payload: error_message,
+                                        identifier: "email",
+                                        typ: "email",
+                                        value: user_input.read().get("email"),
+                                        oninput: move |event: Event<FormData>| user_input.write().set("email", event.value())
                                     }
                                 }
                             }
@@ -141,16 +132,14 @@ pub fn SignUpPage() -> Element {
                                     "Full name"
                                 }
                                 div { class: "mt-2",
-                                    input {
-                                        r#type: "text",
-                                        name: "name",
+                                    InputField {
+                                        required: "true",
                                         autocomplete: "name",
-                                        class: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
-                                        id: "name"
-                                    }
-                                    ErrorLine {
-                                        field: "name",
-                                        error_payload: error_message
+                                        error_payload: error_message,
+                                        identifier: "name",
+                                        typ: "text",
+                                        value: user_input.read().get("name"),
+                                        oninput: move |event: Event<FormData>| user_input.write().set("name", event.value())
                                     }
                                 }
                             }

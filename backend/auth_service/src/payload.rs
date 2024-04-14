@@ -16,7 +16,10 @@ pub struct RegisterPayload {
         length(min = 3, message = "Username cannot be empty"),
         non_control_character,
         regex = "USERNAME_REGEX",
-        custom = "validate_profanity"
+        custom(
+            function = "validate_profanity",
+            message = "Invalid words in username."
+        )
     )]
     pub username: String,
     #[validate(length(min = 8, max = 72, message = "Password must contains 8-72 characters"))]
