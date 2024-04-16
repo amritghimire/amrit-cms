@@ -4,6 +4,8 @@ use reqwest::{Response, StatusCode};
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 
+pub(crate) mod confirm;
+pub(crate) mod logout;
 pub(crate) mod me;
 pub(crate) mod sign_in;
 pub(crate) mod sign_up;

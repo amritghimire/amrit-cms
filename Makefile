@@ -11,8 +11,8 @@ check:
 	cargo check
 
 .PHONY: run
-run: build_frontend
-	cargo watch -x 'run -p api_server'
+run: 
+	cargo run -p api_server
 
 
 .PHONY: run_release
@@ -85,7 +85,7 @@ docker:
 
 .PHONY: build_frontend
 build_frontend:
-	trunk build frontend/index.html
+	trunk build frontend/index.html --filehash false
 
 .PHONY: build_frontend_release
 build_frontend_release:

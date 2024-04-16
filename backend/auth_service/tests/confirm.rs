@@ -261,7 +261,8 @@ async fn confirm_token_invalid(pool: PgPool) {
 
 async fn send_request(app: &Router, token: &str, session_token: &str) -> Response {
     let data = json!({});
-    let mut request = test::build_request(&format!("/confirm/{}", token), http::Method::GET, &data);
+    let mut request =
+        test::build_request(&format!("/confirm/{}", token), http::Method::POST, &data);
     let session_header = HeaderValue::from_str(session_token).unwrap();
     request.headers_mut().insert(AUTHORIZATION, session_header);
     app.clone().oneshot(request).await.unwrap()

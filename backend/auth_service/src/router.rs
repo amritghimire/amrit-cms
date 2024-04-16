@@ -12,5 +12,5 @@ pub fn create_router() -> Router<AppState> {
         .route("/login", post(login))
         .route("/logout", post(logout))
         .route("/me", get(me))
-        .route("/confirm/:token", get(confirm))
+        .route("/confirm/:token", post(confirm))
 }

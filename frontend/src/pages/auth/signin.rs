@@ -6,6 +6,7 @@ use dioxus::prelude::*;
 use crate::components::error_line::OverallErrorLine;
 use crate::components::input::InputField;
 use crate::entities::input::UserInput;
+use crate::utils;
 
 #[component]
 pub fn SignInPage() -> Element {
@@ -18,8 +19,7 @@ pub fn SignInPage() -> Element {
 
         let response = signin(entry.get("username"), entry.get("password")).await;
         if response.is_ok() {
-            let nav = navigator();
-            nav.replace(Route::Home {});
+            utils::navigate_back_or_home();
         }
         if let Err(ApplicationError::BadRequestError(payload)) = response {
             error_message.set(Some(payload));
