@@ -9,3 +9,7 @@ application:
   key: "VdI8w9UnTdTetW2VvVWZtzLKrvxLWxc9ciLuBxDdB5Pc+9sSLnTW7eu21KK7Ht0pbErmtyo59XG/2XPJinSIZg=="
 frontend:
   assets: "../../frontend"
+email:
+  mode: Memory
+  memory:
+    sender: sender@example.com

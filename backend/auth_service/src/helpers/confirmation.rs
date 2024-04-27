@@ -3,9 +3,9 @@ use crate::errors::confirm::ConfirmUserError;
 use crate::errors::user::UserError;
 use crate::extractors::confirmation::Confirmation;
 use crate::extractors::user::User;
+use email_clients::email::{EmailAddress, EmailObject};
 use secrecy::Secret;
 use sqlx::PgConnection;
-use utils::email::send_email;
 use utils::state::AppState;
 use uuid::Uuid;
 
@@ -16,19 +16,25 @@ pub async fn send_verification_link(
     confirmation: &Confirmation,
     token: String,
 ) -> Result<(), UserError> {
-    let client = state.email_client.to_owned();
+    let client = state.email_client.to_owned().unwrap();
     let confirmation_link =
         confirmation.confirmation_url(&state.settings.application.full_url(), Secret::from(token));
     let email_content = confirmation.email_contents(&confirmation_link);
-    send_email(
-        &client,
-        user.email.clone(),
-        "Please verify your account to proceed".to_string(),
-        email_content.0,
-        email_content.1,
-    )
-    .await
-    .map_err(UserError::ConfirmationEmailError)?;
+
+    let email_object = EmailObject {
+        sender: client.get_sender().to_string(),
+        to: vec![EmailAddress {
+            name: user.name.clone(),
+            email: user.email.clone(),
+        }],
+        subject: "Please verify your account to proceed".to_string(),
+        plain: email_content.0,
+        html: email_content.1,
+    };
+    client
+        .send_emails(email_object)
+        .await
+        .map_err(UserError::ConfirmationEmailError)?;
     Ok(())
 }
 

@@ -25,12 +25,13 @@ futures.workspace = true
 sqlx.workspace = true
 chrono.workspace = true
 
-utils = {path="../utils"}
-util_macros = {path= "../util_macros" }
+utils = { path = "../utils" }
+util_macros = { path = "../util_macros" }
+email-clients.workspace = true
 
 
 [dev-dependencies]
 tower.workspace = true
 fake.workspace = true
 rand.workspace = true
-http-body-util.workspace=true
+http-body-util.workspace = true

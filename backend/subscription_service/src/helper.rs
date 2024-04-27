@@ -2,12 +2,12 @@ use crate::errors::confirmation::ConfirmationError;
 use crate::errors::subscribe::SubscribeError;
 use crate::extractor::{ConfirmedSubscriber, NewsletterPayload, SubscriptionPayload};
 use chrono::Utc;
+use email_clients::email::{EmailAddress, EmailObject};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use sqlx::{PgConnection, PgPool};
 
 use crate::errors::newsletter::NewsletterError;
-use utils::email::{send_email, send_emails, EmailObject};
 use utils::state::AppState;
 use uuid::Uuid;
 
@@ -46,16 +46,20 @@ pub async fn send_confirmation_link(
         token
     );
 
-    let client = state.email_client.to_owned();
-    let res = send_email(
-        &client,
-        payload.email,
-        "Welcome to our newsletter!".to_string(),
-        format!(
+    let client = state.email_client.to_owned().unwrap();
+    let email_object = EmailObject {
+        sender: client.get_sender().to_string(),
+        to: vec![EmailAddress {
+            name: payload.name.clone(),
+            email: payload.email.clone(),
+        }],
+
+        subject: "Welcome to our newsletter!".to_string(),
+        plain: format!(
             "Welcome to our newsletter. Please visit {} to confirm your subscription",
             { confirmation_link.clone() }
         ),
-        format!(
+        html: format!(
             "<b>Welcome to our newsletter.\
                  Please click <a href='{}' target='_blank'>here </a>\
                   or copy the link below to confirm your subscription.<br>\
@@ -65,8 +69,8 @@ pub async fn send_confirmation_link(
             { confirmation_link.clone() },
             { confirmation_link }
         ),
-    )
-    .await;
+    };
+    let res = client.send_emails(email_object).await;
     res.map_err(SubscribeError::ConfirmationEmailError)?;
     Ok(())
 }
@@ -150,12 +154,14 @@ pub async fn send_newsletter_email(
     payload: NewsletterPayload,
     confirmed_users: Vec<ConfirmedSubscriber>,
 ) -> u64 {
-    let emails: Vec<EmailObject> = confirmed_users
-        .iter()
-        .map(|c| c.form_email_object(&payload))
-        .collect();
+    let count = confirmed_users.len();
+    let email_object = ConfirmedSubscriber::form_email_object(confirmed_users, &payload);
     let client = state.email_client.to_owned();
-    send_emails(client, emails).await
+    if client.unwrap().send_emails(email_object).await.is_ok() {
+        count as u64
+    } else {
+        0u64
+    }
 }
 
 pub fn generate_subscription_token() -> String {

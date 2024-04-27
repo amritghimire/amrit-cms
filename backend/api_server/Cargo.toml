@@ -20,6 +20,8 @@ util_macros = { path = "../util_macros" }
 subscription_service = { path = "../subscription_service" }
 auth_service = { path = "../auth_service" }
 sqlx.workspace = true
+email-clients.workspace = true
+
 
 # Frontend
 frontend = { path = "../../frontend", default-features = false }

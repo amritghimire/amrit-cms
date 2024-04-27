@@ -11,6 +11,7 @@ database:
   database_name: "amrit_cms"
 email:
   mode: Terminal
-  sender: cms@amritghimire.com
+  terminal:
+    sender: cms@amritghimire.com
 frontend:
   assets: "frontend/dist"

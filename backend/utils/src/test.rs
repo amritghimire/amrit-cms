@@ -1,20 +1,19 @@
-use crate::configuration::{RunMode, Settings};
-use crate::email::{EmailClient, EmailObject, MessagePassingClient};
 use crate::state::AppState;
 use axum::body::Body;
 use axum::http;
 use axum::http::{Request, StatusCode};
 use axum::response::Response;
+use email_clients::clients::memory::{MemoryClient, MemoryConfig};
+use email_clients::clients::EmailClient;
+use email_clients::email::EmailObject;
 use http_body_util::BodyExt;
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::sync::mpsc::SyncSender;
 
 pub fn test_state_for_email(pool: PgPool, tx: SyncSender<EmailObject>) -> AppState {
-    let settings = Settings::get_config(RunMode::Test).expect("Unable to fetch test config");
-
-    let email_client = EmailClient::MessagePassingClient(MessagePassingClient::with_tx(
-        settings.email.clone(),
+    let email_client = EmailClient::Memory(MemoryClient::with_tx(
+        MemoryConfig::new("test@example.com"),
         tx,
     ));
     AppState::test_email_state(pool, email_client)

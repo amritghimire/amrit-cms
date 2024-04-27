@@ -68,8 +68,8 @@ async fn subscribe_valid_form_email_sent(pool: PgPool) {
     let email_object = rx
         .try_recv()
         .expect("Email not sent during the subscription");
-    assert_eq!(email_object.sender, settings.email.sender);
-    assert_eq!(email_object.to, email);
+    assert_eq!(email_object.sender, "test@example.com");
+    assert_eq!(email_object.to[0].email, email);
     assert_eq!(email_object.subject, "Welcome to our newsletter!");
     let raw_link = get_link(&email_object.plain);
     let confirmation_link = Url::parse(&raw_link).unwrap();

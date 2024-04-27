@@ -1,5 +1,5 @@
+use email_clients::email::{EmailAddress, EmailObject};
 use unicode_segmentation::UnicodeSegmentation;
-use utils::email::EmailObject;
 use validator::{Validate, ValidationError};
 
 #[derive(serde::Serialize, serde::Deserialize, Validate)]
@@ -37,13 +37,26 @@ pub struct ConfirmedSubscriber {
 }
 
 impl ConfirmedSubscriber {
-    pub fn form_email_object(&self, payload: &NewsletterPayload) -> EmailObject {
+    pub fn form_email_object(
+        to: Vec<ConfirmedSubscriber>,
+        payload: &NewsletterPayload,
+    ) -> EmailObject {
+        let to_addresses: Vec<EmailAddress> = to.iter().map(|t| t.into()).collect();
         EmailObject {
             sender: "".to_string(),
-            to: self.email.clone(),
+            to: to_addresses,
             subject: payload.title.clone(),
             plain: payload.content.plain.clone(),
             html: payload.content.html.clone(),
+        }
+    }
+}
+
+impl From<&ConfirmedSubscriber> for EmailAddress {
+    fn from(val: &ConfirmedSubscriber) -> Self {
+        EmailAddress {
+            name: val.name.clone(),
+            email: val.email.clone(),
         }
     }
 }

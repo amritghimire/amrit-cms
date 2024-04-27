@@ -117,8 +117,8 @@ async fn registration_sends_confirmation_email(pool: PgPool) {
     let email_object = rx
         .try_recv()
         .expect("Email not sent during the subscription");
-    assert_eq!(email_object.sender, settings.email.sender);
-    assert_eq!(email_object.to, payload.email);
+    assert_eq!(email_object.sender, "test@example.com");
+    assert_eq!(email_object.to[0].email, payload.email);
     assert_eq!(
         email_object.subject,
         "Please verify your account to proceed"

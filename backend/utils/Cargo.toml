@@ -14,7 +14,6 @@ serde_json.workspace = true
 thiserror.workspace = true
 validator.workspace = true
 secrecy.workspace = true
-lettre.workspace = true
 anyhow.workspace = true
 mime.workspace = true
 phf.workspace = true
@@ -24,6 +23,8 @@ linkify.workspace = true
 tracing.workspace = true
 http-body-util.workspace = true
 axum-extra.workspace = true
+email-clients.workspace = true
+
 
 
 [build-dependencies]

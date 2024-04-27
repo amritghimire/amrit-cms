@@ -1,5 +1,5 @@
+use email_clients::errors::EmailError;
 use util_macros::ErrorPayloadMacro;
-use utils::email::EmailError;
 use utils::errors::{ErrorPayload, ErrorReport};
 
 #[derive(Debug, thiserror::Error, ErrorPayloadMacro)]

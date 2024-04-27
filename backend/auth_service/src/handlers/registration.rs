@@ -10,7 +10,7 @@ use axum::extract::State;
 use axum::http::header::AUTHORIZATION;
 use axum::http::HeaderValue;
 use axum::response::IntoResponse;
-use axum::Json;
+use axum::{debug_handler, Json};
 use axum_extra::extract::cookie::Cookie;
 use axum_extra::extract::SignedCookieJar;
 use serde_json::json;
@@ -18,11 +18,12 @@ use utils::errors::ErrorPayload;
 use utils::state::AppState;
 use utils::validation::ValidatedForm;
 
-#[tracing::instrument(name="Starting a registration",
+#[debug_handler]
+#[tracing::instrument(name = "Starting a registration",
 skip(state, payload), fields(
-name= %payload.name,
-username= %payload.username,
-email= %payload.email
+name = % payload.name,
+username = % payload.username,
+email = % payload.email
 )
 )]
 pub async fn register(

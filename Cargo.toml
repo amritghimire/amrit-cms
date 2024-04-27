@@ -52,7 +52,6 @@ tower-http = { version = "0.5.1", features = ["request-id", "trace", "util", "fs
 tracing-subscriber = { version = "0.3.16", features = ["env-filter", "registry", "tracing-log"], optional = false }
 config = "0.14.0"
 secrecy = { version = "0.8.0", features = ["serde"] }
-lettre = { version = "0.11.4", features = ["tracing", "tokio1-native-tls", "tokio1"] }
 anyhow = "1.0.69"
 phf = { version = "0.11.2", features = ["macros"] }
 hyper-util = { version = "0.1.2", features = ["client-legacy", "client"] }
@@ -63,3 +62,4 @@ rustrict = "0.7.21"
 argon2 = "0.5.3"
 zxcvbn = "2.2.2"
 regex = "1.7.1"
+email-clients = { version = "0.1.0", features = ["terminal", "memory", "terminal", "smtp"] }

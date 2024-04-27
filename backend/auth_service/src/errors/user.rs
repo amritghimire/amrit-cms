@@ -1,7 +1,7 @@
 use crate::errors::auth::FetchUserError;
+use email_clients::errors::EmailError;
 use serde_json::{json, Value};
 use util_macros::ErrorPayloadMacro;
-use utils::email::EmailError;
 use utils::errors::{ErrorPayload, ErrorReport};
 use zxcvbn::ZxcvbnError;
 
@@ -15,7 +15,7 @@ pub enum UserError {
     PasswordCheckFailed(#[source] ZxcvbnError),
     #[error("Weak password")]
     WeakPassword,
-    #[error("Failed to send confirmation email")]
+    #[error("Failed to send confirmation email: {0}")]
     ConfirmationEmailError(#[source] EmailError),
     #[error("User not verified")]
     UserNotVerified,

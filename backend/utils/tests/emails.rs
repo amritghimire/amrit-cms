@@ -1,6 +1,7 @@
+use email_clients::clients::memory::{MemoryClient, MemoryConfig};
+use email_clients::clients::EmailClient;
+use email_clients::email::{EmailAddress, EmailObject};
 use std::sync::mpsc;
-use utils::configuration::{RunMode, Settings};
-use utils::email::{send_email, EmailClient, MessagePassingClient};
 
 #[sqlx::test]
 async fn send_email_saved_in_memory() {
@@ -10,27 +11,32 @@ async fn send_email_saved_in_memory() {
     let mail_html = "Body of email in <b>HTML</b>".to_string();
 
     let (tx, rx) = mpsc::sync_channel(2);
-    let settings = Settings::get_config(RunMode::Test).expect("Unable to fetch test config");
 
-    let email_client = EmailClient::MessagePassingClient(MessagePassingClient::with_tx(
-        settings.email.clone(),
+    let email_client = EmailClient::Memory(MemoryClient::with_tx(
+        MemoryConfig::new("test@example.com"),
         tx,
     ));
+    let email = EmailObject {
+        sender: "test@example.com".to_string(),
+        to: vec![EmailAddress {
+            name: "Mail".to_string(),
+            email: recipient_mail.clone(),
+        }],
+        subject: mail_subject.clone(),
+        plain: mail_body.clone(),
+        html: mail_html,
+    };
 
-    send_email(
-        &email_client,
-        recipient_mail.clone(),
-        mail_subject.clone(),
-        mail_body.clone(),
-        mail_html,
-    )
-    .await
-    .expect("Unable to send email");
+    email_client
+        .unwrap()
+        .send_emails(email)
+        .await
+        .expect("Unable to send email");
 
     let email = rx.recv().unwrap();
 
-    assert_eq!(email.sender, settings.email.sender);
-    assert_eq!(email.to, recipient_mail);
+    assert_eq!(email.sender, "test@example.com");
+    assert_eq!(email.to[0].email, recipient_mail);
     assert_eq!(email.subject, mail_subject);
     assert_eq!(email.plain, mail_body);
 }

@@ -6,6 +6,7 @@ use auth_service::helpers::user::insert_user;
 use auth_service::payload::RegisterPayload;
 use auth_service::router::create_router;
 use axum::Router;
+use email_clients::email::EmailObject;
 use fake::faker::internet::en::{SafeEmail, Username};
 use fake::faker::name::en::Name;
 use fake::Fake;
@@ -14,7 +15,6 @@ use sqlx::{PgConnection, PgPool};
 use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
 use utils::configuration::{RunMode, Settings};
-use utils::email::EmailObject;
 use utils::test;
 
 pub static STRONG_PASSWORD: &str = "r0sebudmaelstrom11/20/91aaaa";

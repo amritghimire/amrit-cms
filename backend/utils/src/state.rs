@@ -1,7 +1,8 @@
 use crate::configuration::{RunMode, Settings};
-use crate::email::{get_email_client, EmailClient, MessagePassingClient};
 use axum::extract::FromRef;
 use axum_extra::extract::cookie::Key;
+use email_clients::clients::{get_email_client, EmailClient};
+use email_clients::configuration::EmailConfiguration;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::time::Duration;
@@ -20,7 +21,12 @@ impl AppState {
             .connect_lazy(&settings.database.connection_string())
             .expect("Failed to connect to Postgres.");
 
-        let email_client = get_email_client(settings.email.clone());
+        let email_configuration: EmailConfiguration = settings
+            .clone()
+            .email
+            .try_into()
+            .expect("Invalid email configuration");
+        let email_client = get_email_client(email_configuration);
 
         Self {
             settings,
@@ -31,7 +37,12 @@ impl AppState {
 
     pub fn from_conn(connection: PgPool) -> Self {
         let settings = Settings::new().expect("Unable to fetch config");
-        let email_client = get_email_client(settings.email.clone());
+        let email_configuration: EmailConfiguration = settings
+            .clone()
+            .email
+            .try_into()
+            .expect("Invalid email configuration");
+        let email_client = get_email_client(email_configuration);
 
         Self {
             settings,
@@ -44,8 +55,12 @@ impl AppState {
         let settings = config.unwrap_or_else(|| {
             Settings::get_config(RunMode::Test).expect("Unable to fetch test config")
         });
-        let email_client =
-            EmailClient::MessagePassingClient(MessagePassingClient::new(settings.email.clone()));
+        let email_configuration: EmailConfiguration = settings
+            .clone()
+            .email
+            .try_into()
+            .expect("Invalid email configuration");
+        let email_client = get_email_client(email_configuration);
 
         Self {
             settings,

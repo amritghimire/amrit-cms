@@ -1,4 +1,7 @@
 use config::{Config, ConfigError, Environment, File};
+use email_clients::clients::{memory::MemoryConfig, smtp::SmtpConfig, terminal::TerminalConfig};
+use email_clients::configuration::EmailConfiguration;
+use email_clients::errors::EmailError;
 use secrecy::{ExposeSecret, Secret};
 use std::env;
 use std::path::PathBuf;
@@ -40,16 +43,10 @@ impl TryFrom<String> for RunMode {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, serde::Deserialize, serde::Serialize)]
-pub enum EmailMode {
-    Terminal,       // Output to the terminal
-    SMTP,           // Use smtp passwords and options
-    MessagePassing, // Use in memory email client
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, serde::Deserialize, serde::Serialize)]
 pub enum TlsMode {
     Local,
-    Tls,      // Insecure connection only
+    Tls,
+    // Insecure connection only
     StartTls, // Start with insecure connection and use STARTTLS when available
 }
 
@@ -116,14 +113,34 @@ impl ApplicationSettings {
 }
 
 #[derive(Clone, Debug, serde::Deserialize)]
+pub enum EmailMode {
+    Terminal,
+    SMTP,
+    Memory,
+}
+
+#[derive(Clone, Debug, serde::Deserialize)]
 pub struct EmailSettings {
     pub mode: EmailMode,
-    pub sender: String,
-    pub relay: Option<String>,
-    pub username: Option<Secret<String>>,
-    pub password: Option<Secret<String>>,
-    pub port: Option<u16>,
-    pub tls: Option<TlsMode>,
+    pub terminal: Option<TerminalConfig>,
+    pub smtp: Option<SmtpConfig>,
+    pub memory: Option<MemoryConfig>,
+}
+
+impl TryInto<EmailConfiguration> for EmailSettings {
+    type Error = EmailError;
+
+    fn try_into(self) -> Result<EmailConfiguration, Self::Error> {
+        let unexpected_error = EmailError::UnexpectedError(format!(
+            "Configuration missing for the email mode {:?}",
+            self.mode
+        ));
+        match self.mode {
+            EmailMode::Terminal => Ok(self.terminal.ok_or(unexpected_error)?.into()),
+            EmailMode::SMTP => Ok(self.smtp.ok_or(unexpected_error)?.into()),
+            EmailMode::Memory => Ok(self.memory.ok_or(unexpected_error)?.into()),
+        }
+    }
 }
 
 impl Settings {

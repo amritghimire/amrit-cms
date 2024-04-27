@@ -1,4 +1,5 @@
 use axum::{http, Router};
+use email_clients::email::EmailObject;
 use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
 use fake::Fake;
@@ -7,7 +8,7 @@ use std::collections::HashMap;
 use std::sync::mpsc::Receiver;
 use tower::ServiceExt;
 use url::Url;
-use utils::email::{get_link, EmailObject};
+use utils::email::get_link;
 use utils::test;
 
 pub fn extract_token(raw_link: String) -> String {
