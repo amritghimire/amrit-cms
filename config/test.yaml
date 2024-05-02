@@ -12,4 +12,6 @@ frontend:
 email:
   mode: Memory
   memory:
-    sender: sender@example.com
+    sender:
+      name: AmritCMS
+      email: cms@amritghimire.com

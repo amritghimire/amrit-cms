@@ -43,7 +43,7 @@ impl ConfirmedSubscriber {
     ) -> EmailObject {
         let to_addresses: Vec<EmailAddress> = to.iter().map(|t| t.into()).collect();
         EmailObject {
-            sender: "".to_string(),
+            sender: "".into(),
             to: to_addresses,
             subject: payload.title.clone(),
             plain: payload.content.plain.clone(),

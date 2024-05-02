@@ -240,6 +240,7 @@ dependencies = [
  "sha2",
  "sqlx",
  "thiserror",
+ "tokio",
  "tower",
  "tracing",
  "url",
@@ -1366,13 +1367,14 @@ dependencies = [
 
 [[package]]
 name = "email-clients"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72c80d64c3cb0de76de55bfb3a655cd6d2d11fa0a226ebf999029d3053a71216"
+checksum = "7809630acc2ccb3134c61d5d8a8551903019dce8e41b022270620ad713356df8"
 dependencies = [
  "async-trait",
  "lettre",
  "log",
+ "reqwest",
  "secrecy",
  "serde",
  "thiserror",
@@ -3234,9 +3236,9 @@ checksum = "456c603be3e8d448b072f410900c09faf164fbce2d480456f50eea6e25f9c848"
 
 [[package]]
 name = "reqwest"
-version = "0.12.3"
+version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e6cc1e89e689536eb5aeede61520e874df5a4707df811cd5da4aa5fbb2aae19"
+checksum = "566cafdd92868e0939d3fb961bd0dc25fcfaaed179291093b3d43e6b3150ea10"
 dependencies = [
  "base64 0.22.0",
  "bytes",

@@ -53,7 +53,7 @@ audit:
 
 .PHONY: test
 test:
-	DATABASE_URL="$(DATABASE_URL)" cargo test
+	DATABASE_URL="$(DATABASE_URL)" cargo test $(filter-out $@,$(MAKECMDGOALS))
 
 .PHONY: migrate
 migrate:

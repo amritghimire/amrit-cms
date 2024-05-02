@@ -1,4 +1,5 @@
 use config::{Config, ConfigError, Environment, File};
+use email_clients::clients::mailersend::MailerSendConfig;
 use email_clients::clients::{memory::MemoryConfig, smtp::SmtpConfig, terminal::TerminalConfig};
 use email_clients::configuration::EmailConfiguration;
 use email_clients::errors::EmailError;
@@ -117,6 +118,7 @@ pub enum EmailMode {
     Terminal,
     SMTP,
     Memory,
+    Mailersend,
 }
 
 #[derive(Clone, Debug, serde::Deserialize)]
@@ -125,6 +127,7 @@ pub struct EmailSettings {
     pub terminal: Option<TerminalConfig>,
     pub smtp: Option<SmtpConfig>,
     pub memory: Option<MemoryConfig>,
+    pub mailersend: Option<MailerSendConfig>,
 }
 
 impl TryInto<EmailConfiguration> for EmailSettings {
@@ -139,6 +142,7 @@ impl TryInto<EmailConfiguration> for EmailSettings {
             EmailMode::Terminal => Ok(self.terminal.ok_or(unexpected_error)?.into()),
             EmailMode::SMTP => Ok(self.smtp.ok_or(unexpected_error)?.into()),
             EmailMode::Memory => Ok(self.memory.ok_or(unexpected_error)?.into()),
+            EmailMode::Mailersend => Ok(self.mailersend.ok_or(unexpected_error)?.into()),
         }
     }
 }

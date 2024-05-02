@@ -48,7 +48,7 @@ pub async fn send_confirmation_link(
 
     let client = state.email_client.to_owned().unwrap();
     let email_object = EmailObject {
-        sender: client.get_sender().to_string(),
+        sender: client.get_sender(),
         to: vec![EmailAddress {
             name: payload.name.clone(),
             email: payload.email.clone(),

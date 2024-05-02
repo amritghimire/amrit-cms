@@ -16,13 +16,13 @@ pub async fn send_verification_link(
     confirmation: &Confirmation,
     token: String,
 ) -> Result<(), UserError> {
-    let client = state.email_client.to_owned().unwrap();
     let confirmation_link =
         confirmation.confirmation_url(&state.settings.application.full_url(), Secret::from(token));
     let email_content = confirmation.email_contents(&confirmation_link);
 
+    let client = state.email_client.to_owned().unwrap();
     let email_object = EmailObject {
-        sender: client.get_sender().to_string(),
+        sender: client.get_sender(),
         to: vec![EmailAddress {
             name: user.name.clone(),
             email: user.email.clone(),
