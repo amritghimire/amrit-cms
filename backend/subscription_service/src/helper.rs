@@ -6,9 +6,10 @@ use email_clients::email::{EmailAddress, EmailObject};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use sqlx::{PgConnection, PgPool};
+use tokio::task;
 
 use crate::errors::newsletter::NewsletterError;
-use utils::state::AppState;
+use utils::state::{AppState, BackgroundTask};
 use uuid::Uuid;
 
 #[tracing::instrument(name = "Inserting subscriber to database", skip(transaction, payload))]
@@ -70,8 +71,17 @@ pub async fn send_confirmation_link(
             { confirmation_link }
         ),
     };
-    let res = client.send_emails(email_object).await;
-    res.map_err(SubscribeError::ConfirmationEmailError)?;
+    let handle = task::spawn(async move {
+        client
+            .send_emails(email_object)
+            .await
+            .map_err(SubscribeError::ConfirmationEmailError)
+            .expect("Unable to send confirmation email");
+    });
+    if let Some(tx) = &state.tasks {
+        let _ = tx.send(BackgroundTask::new("send_confirmation_email", handle));
+    }
+
     Ok(())
 }
 
@@ -157,6 +167,7 @@ pub async fn send_newsletter_email(
     let count = confirmed_users.len();
     let email_object = ConfirmedSubscriber::form_email_object(confirmed_users, &payload);
     let client = state.email_client.to_owned();
+
     if client.unwrap().send_emails(email_object).await.is_ok() {
         count as u64
     } else {

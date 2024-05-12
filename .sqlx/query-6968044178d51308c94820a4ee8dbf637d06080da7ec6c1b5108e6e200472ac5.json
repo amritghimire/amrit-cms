@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "delete from confirmations where user_id = $1;",
+  "query": "\n        DELETE FROM sessions where user_id = $1\n        ",
   "describe": {
     "columns": [],
     "parameters": {
@@ -10,5 +10,5 @@
     },
     "nullable": []
   },
-  "hash": "6dada41b54a586d8cb942ed2a387a8e48962e14e5121c6dca0e951f903e95c75"
+  "hash": "6968044178d51308c94820a4ee8dbf637d06080da7ec6c1b5108e6e200472ac5"
 }

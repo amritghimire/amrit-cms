@@ -1,3 +1,4 @@
+use crate::components::button::Button;
 use crate::errors::{ApplicationError, ErrorPayload};
 use crate::routes::Route;
 use crate::utils::api::sign_up::{signup, RegistrationPayload};
@@ -6,24 +7,35 @@ use dioxus::prelude::*;
 use crate::components::error_line::OverallErrorLine;
 use crate::components::input::InputField;
 use crate::entities::input::UserInput;
+use crate::state::AppState;
+use crate::utils;
 
 #[component]
 pub fn SignUpPage() -> Element {
     let mut error_message: Signal<Option<ErrorPayload>> = use_signal(|| None);
     let mut user_input = use_signal(UserInput::new);
+    let mut app_context = consume_context::<Signal<AppState>>();
+    let mut in_progress = use_signal(|| false);
 
     let onsubmit = move |_: FormEvent| async move {
+        in_progress.set(true);
         let payload = RegistrationPayload::from(user_input);
         error_message.set(None);
 
         let response = signup(payload).await;
-        if response.is_ok() {
-            let nav = navigator();
-            nav.replace(Route::Home {});
+        match response {
+            Ok(_) => {
+                let nav = navigator();
+                nav.replace(Route::Home {});
+            }
+            Err(ApplicationError::BadRequestError(payload)) => {
+                error_message.set(Some(payload));
+            }
+            Err(e) => {
+                utils::handle_application_error(&mut app_context, e);
+            }
         }
-        if let Err(ApplicationError::BadRequestError(payload)) = response {
-            error_message.set(Some(payload));
-        }
+        in_progress.set(false);
     };
 
     rsx! {
@@ -181,8 +193,9 @@ pub fn SignUpPage() -> Element {
                         class: "text-sm font-semibold leading-6 text-gray-900",
                         "Cancel"
                     }
-                    button {
+                    Button {
                         r#type: "submit",
+                        progress: *in_progress.read(),
                         class: "rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
                         "Sign Up"
                     }

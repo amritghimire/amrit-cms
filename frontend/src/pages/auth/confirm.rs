@@ -1,5 +1,8 @@
+use crate::entities::toast::ToastType;
 use crate::errors::ApplicationError;
 use crate::routes::Route;
+use crate::state::AppState;
+use crate::utils;
 use crate::utils::api::confirm::confirm_token;
 use dioxus::prelude::*;
 use log::info;
@@ -7,16 +10,28 @@ use log::info;
 #[component]
 pub fn ConfirmationPage(token: String) -> Element {
     let token_signal = use_signal(|| token);
+    let mut app_context = consume_context::<Signal<AppState>>();
 
     let future = use_resource(move || async move {
         info!("Spawning task");
 
         let response = confirm_token(&token_signal.read()).await;
-        if let Err(ApplicationError::BadRequestError(payload)) = response {
-            let message = payload.message.clone();
-            Some(message)
-        } else {
-            None
+        match response {
+            Ok(_) => {
+                app_context.write().user = None;
+                app_context
+                    .write()
+                    .add_toast(ToastType::Info, "User verified successfully.");
+                None
+            }
+            Err(ApplicationError::BadRequestError(payload)) => {
+                let message = payload.message.clone();
+                Some(message)
+            }
+            Err(e) => {
+                utils::handle_application_error(&mut app_context, e);
+                Some("Failed to confirm.".to_string())
+            }
         }
     });
 

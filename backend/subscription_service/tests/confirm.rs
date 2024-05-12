@@ -26,12 +26,17 @@ async fn confirmations_without_token_are_rejected_with_400(pool: PgPool) {
 
 #[sqlx::test]
 async fn link_returned_by_subscribe_returns_200_if_called(pool: PgPool) {
-    let (tx, rx) = mpsc::sync_channel(5);
+    let (email_tx, email_rx) = mpsc::sync_channel(5);
+    let (task_tx, task_rx) = mpsc::sync_channel(5);
+
     let settings = Settings::get_config(RunMode::Test).expect("Unable to fetch test config");
-    let state = test::test_state_for_email(pool, tx);
+    let mut state = test::test_state_for_email(pool, email_tx);
+    state.tasks = Some(task_tx);
+
     let app = create_router().with_state(state);
 
-    let raw_link = get_confirmation_link(&rx, &app).await;
+    let raw_link = get_confirmation_link(&email_rx, &app, Some(&task_rx)).await;
+
     let confirmation_link = Url::parse(&raw_link).unwrap();
     let application_link = Url::parse(&settings.application.full_url()).unwrap();
     assert_eq!(
@@ -52,12 +57,15 @@ async fn link_returned_by_subscribe_returns_200_if_called(pool: PgPool) {
 
 #[sqlx::test]
 async fn clicking_on_confirmation_link_confirms_a_subscriber(pool: PgPool) {
-    let (tx, rx) = mpsc::sync_channel(5);
+    let (email_tx, email_rx) = mpsc::sync_channel(5);
+    let (task_tx, task_rx) = mpsc::sync_channel(5);
+
     let mut conn = pool.acquire().await.expect("Unable to acquire connection");
-    let state = test::test_state_for_email(pool, tx);
+    let mut state = test::test_state_for_email(pool, email_tx);
+    state.tasks = Some(task_tx);
     let app = create_router().with_state(state);
 
-    let raw_link = get_confirmation_link(&rx, &app).await;
+    let raw_link = get_confirmation_link(&email_rx, &app, Some(&task_rx)).await;
     let token = extract_token(raw_link);
     let response = send_request(&app, Some(&token)).await;
 

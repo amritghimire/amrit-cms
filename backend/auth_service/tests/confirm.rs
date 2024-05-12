@@ -1,3 +1,4 @@
+use auth_service::extractors::confirmation::ConfirmationActionType;
 use auth_service::helpers::confirmation::get_confirmation;
 use auth_service::helpers::user::fetch_user;
 use auth_service::router::create_router;
@@ -21,7 +22,8 @@ async fn confirm_valid_token(pool: PgPool) {
 
     let state = AppState::test_state(pool, None);
     let app = create_router().with_state(state);
-    let (confirmation, token) = common::confirmation_fixture(&mut conn).await;
+    let (confirmation, token) =
+        common::confirmation_fixture(&mut conn, ConfirmationActionType::UserVerification).await;
     let session_token = common::session_fixture(&mut conn, confirmation.user_id).await;
     let response = send_request(&app, &token, &session_token).await;
 
@@ -34,7 +36,8 @@ async fn confirm_unauthorized(pool: PgPool) {
 
     let state = AppState::test_state(pool, None);
     let app = create_router().with_state(state);
-    let (_, token) = common::confirmation_fixture(&mut conn).await;
+    let (_, token) =
+        common::confirmation_fixture(&mut conn, ConfirmationActionType::UserVerification).await;
     let response = send_request(&app, &token, "").await;
 
     test::assert_response(
@@ -46,14 +49,15 @@ async fn confirm_unauthorized(pool: PgPool) {
 }
 
 #[sqlx::test]
-async fn confirm_invalid_token(pool: PgPool) {
+async fn confirm_invalid_session_token(pool: PgPool) {
     let mut conn = pool.acquire().await.expect("Unable to acquire connection");
     let identifier = Uuid::new_v4();
     let session_token = format!("{}.verifier_hash", identifier);
 
     let state = AppState::test_state(pool, None);
     let app = create_router().with_state(state);
-    let (_, token) = common::confirmation_fixture(&mut conn).await;
+    let (_, token) =
+        common::confirmation_fixture(&mut conn, ConfirmationActionType::UserVerification).await;
     let response = send_request(&app, &token, &session_token).await;
 
     test::assert_response(
@@ -70,7 +74,8 @@ async fn confirm_different_user_logged_in(pool: PgPool) {
 
     let state = AppState::test_state(pool, None);
     let app = create_router().with_state(state);
-    let (_, token) = common::confirmation_fixture(&mut conn).await;
+    let (_, token) =
+        common::confirmation_fixture(&mut conn, ConfirmationActionType::UserVerification).await;
     let new_user = common::user_fixture(&mut conn).await;
     let session_token = common::session_fixture(&mut conn, new_user.id).await;
     let response = send_request(&app, &token, &session_token).await;
@@ -89,7 +94,8 @@ async fn confirm_token_verify_user(pool: PgPool) {
 
     let state = AppState::test_state(pool, None);
     let app = create_router().with_state(state);
-    let (confirmation, token) = common::confirmation_fixture(&mut conn).await;
+    let (confirmation, token) =
+        common::confirmation_fixture(&mut conn, ConfirmationActionType::UserVerification).await;
     let session_token = common::session_fixture(&mut conn, confirmation.user_id).await;
     send_request(&app, &token, &session_token).await;
 
@@ -108,7 +114,8 @@ async fn confirm_token_verify_user_failed(pool: PgPool) {
 
     let state = AppState::test_state(pool, None);
     let app = create_router().with_state(state);
-    let (confirmation, token) = common::confirmation_fixture(&mut conn).await;
+    let (confirmation, token) =
+        common::confirmation_fixture(&mut conn, ConfirmationActionType::UserVerification).await;
     let session_token = common::session_fixture(&mut conn, confirmation.user_id).await;
     // missing confirmation details
     sqlx::query!(
@@ -192,7 +199,8 @@ async fn confirm_token_invalid(pool: PgPool) {
 
     let state = AppState::test_state(pool, None);
     let app = create_router().with_state(state);
-    let (confirmation, token) = common::confirmation_fixture(&mut conn).await;
+    let (confirmation, token) =
+        common::confirmation_fixture(&mut conn, ConfirmationActionType::UserVerification).await;
     let session_token = common::session_fixture(&mut conn, confirmation.user_id).await;
     // Incomplete token
     let response = send_request(&app, "invalid", &session_token).await;

@@ -6,9 +6,10 @@ use sha2::{Digest, Sha256};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize, Copy, Clone)]
+#[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialOrd, PartialEq, Ord, Eq)]
 pub enum ConfirmationActionType {
     UserVerification,
+    PasswordReset,
     Invalid,
 }
 
@@ -16,6 +17,7 @@ impl From<String> for ConfirmationActionType {
     fn from(value: String) -> Self {
         match value.to_lowercase().as_str() {
             "userverification" => ConfirmationActionType::UserVerification,
+            "passwordreset" => ConfirmationActionType::PasswordReset,
             _ => ConfirmationActionType::Invalid,
         }
     }
@@ -26,6 +28,7 @@ impl From<ConfirmationActionType> for String {
         match value {
             ConfirmationActionType::UserVerification => "userverification".to_string(),
             ConfirmationActionType::Invalid => "invalid".to_string(),
+            ConfirmationActionType::PasswordReset => "passwordreset".to_string(),
         }
     }
 }
@@ -73,8 +76,29 @@ impl Confirmation {
         )
     }
 
+    pub fn subject(&self) -> String {
+        match self.action_type {
+            ConfirmationActionType::UserVerification => {
+                "Please verify your account to proceed".to_string()
+            }
+            ConfirmationActionType::PasswordReset => {
+                "Please proceed to reset the password".to_string()
+            }
+            ConfirmationActionType::Invalid => {
+                unreachable!()
+            }
+        }
+    }
+
     pub fn confirmation_url(&self, full_url: &str, token: Secret<String>) -> String {
-        format!("{}/auth/confirm/{}", full_url, token.expose_secret())
+        match self.action_type {
+            ConfirmationActionType::PasswordReset => {
+                format!("{}/auth/reset-password/{}", full_url, token.expose_secret())
+            }
+            _ => {
+                format!("{}/auth/confirm/{}", full_url, token.expose_secret())
+            }
+        }
     }
 
     pub fn email_contents(&self, confirmation_link: &str) -> (String, String) {
@@ -95,7 +119,25 @@ impl Confirmation {
                     { confirmation_link }
                 ),
             ),
-            _ => {
+            ConfirmationActionType::PasswordReset => {
+                (
+                    format!(
+                        "You have requested to reset your password. Please visit {} to reset your password",
+                        { confirmation_link }
+                    ),
+                    format!(
+                        "<b>You have requested to reset your password.\
+                     Please click <a href='{}' target='_blank'>here </a>\
+                      or copy the link below to reset your password.<br>\
+                     \
+                     {}
+                     ",
+                        { confirmation_link },
+                        { confirmation_link }
+                    ),
+                )
+            }
+            ConfirmationActionType::Invalid => {
                 unreachable!()
             }
         }

@@ -16,6 +16,8 @@ pub enum ConfirmUserError {
     InvalidActionType,
     #[error("Cannot fetch user")]
     FetchUserFailed(#[source] FetchUserError),
+    #[error("User already verified")]
+    UserAlreadyVerified,
 }
 
 impl ErrorReport for ConfirmUserError {

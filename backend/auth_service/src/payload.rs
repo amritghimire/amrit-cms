@@ -13,7 +13,7 @@ static USERNAME_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[0-9A-Za-z_.]+$"
 #[derive(Debug, Deserialize, Validate)]
 pub struct RegisterPayload {
     #[validate(
-        length(min = 3, message = "Username cannot be empty"),
+        length(min = 3, message = "Username cannot be empty", max = 255),
         non_control_character,
         regex = "USERNAME_REGEX",
         custom(
@@ -24,7 +24,7 @@ pub struct RegisterPayload {
     pub username: String,
     #[validate(length(min = 8, max = 72, message = "Password must contains 8-72 characters"))]
     pub password: String,
-    #[validate(length(min = 1, message = "Email cannot be empty"), email)]
+    #[validate(length(min = 1, max = 255, message = "Email cannot be empty"), email)]
     pub email: String,
     #[validate(must_match(
         other = "password",

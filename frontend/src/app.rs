@@ -1,3 +1,4 @@
+use crate::components::toast::ToastMessageBox;
 use crate::errors::ApplicationError;
 use crate::routes::Route;
 use crate::state::AppState;
@@ -23,6 +24,7 @@ pub fn App() -> Element {
                 handle_error(error)
             },
             Router::<Route> {}
+            ToastMessageBox{}
         }
     }
 }

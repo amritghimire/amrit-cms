@@ -15,6 +15,7 @@ use sqlx::{PgConnection, PgPool};
 use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
 use utils::configuration::{RunMode, Settings};
+use utils::state::BackgroundTask;
 use utils::test;
 
 pub static STRONG_PASSWORD: &str = "r0sebudmaelstrom11/20/91aaaa";
@@ -29,13 +30,31 @@ pub fn setup_app(pool: PgPool) -> (Receiver<EmailObject>, Settings, Router) {
 }
 
 #[allow(dead_code)]
-pub async fn confirmation_fixture(transaction: &mut PgConnection) -> (Confirmation, String) {
+pub fn setup_app_with_task_thread(
+    pool: PgPool,
+) -> (
+    Receiver<EmailObject>,
+    Receiver<BackgroundTask>,
+    Settings,
+    Router,
+) {
+    let (email_tx, email_rx) = mpsc::sync_channel(5);
+    let (task_tx, task_rx) = mpsc::sync_channel(5);
+    let settings = Settings::get_config(RunMode::Test).expect("Unable to fetch test config");
+    let mut state = test::test_state_for_email(pool, email_tx);
+    state.tasks = Some(task_tx);
+    let app = create_router().with_state(state);
+    (email_rx, task_rx, settings, app)
+}
+
+#[allow(dead_code)]
+pub async fn confirmation_fixture(
+    transaction: &mut PgConnection,
+    action_type: ConfirmationActionType,
+) -> (Confirmation, String) {
     let user = user_fixture(transaction).await;
-    let (confirmation, token) = Confirmation::new(
-        user.id,
-        ConfirmationActionType::UserVerification,
-        json!({"email": user.email}),
-    );
+    let (confirmation, token) =
+        Confirmation::new(user.id, action_type, json!({"email": user.email}));
     add_confirmation(transaction, &confirmation)
         .await
         .expect("Cannot add confirmation");

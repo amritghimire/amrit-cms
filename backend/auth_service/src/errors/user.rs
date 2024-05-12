@@ -25,6 +25,8 @@ pub enum UserError {
     SessionError(#[source] sqlx::Error),
     #[error("user fetch error")]
     UserFetchError(#[source] FetchUserError),
+    #[error("Unexpected error")]
+    UnexpectedError,
 }
 
 impl ErrorReport for UserError {

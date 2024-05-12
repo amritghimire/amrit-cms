@@ -55,17 +55,23 @@ async fn subscribe_valid_form_data_is_inserted(pool: PgPool) {
 
 #[sqlx::test]
 async fn subscribe_valid_form_email_sent(pool: PgPool) {
-    let (tx, rx) = mpsc::sync_channel(5);
+    let (email_tx, email_rx) = mpsc::sync_channel(5);
+    let (task_tx, task_rx) = mpsc::sync_channel(5);
+
     let settings = Settings::get_config(RunMode::Test).expect("Unable to fetch test config");
-    let state = test::test_state_for_email(pool, tx);
+    let mut state = test::test_state_for_email(pool, email_tx);
+    state.tasks = Some(task_tx);
+
     let app = create_router().with_state(state);
 
     let name: String = Name().fake();
     let email: String = SafeEmail().fake();
 
     send_request(&app, &name, &email).await;
+    let task = task_rx.try_recv().expect("Task not thrown out.");
+    task.handle.await.expect("Join error, task panicked");
 
-    let email_object = rx
+    let email_object = email_rx
         .try_recv()
         .expect("Email not sent during the subscription");
     assert_eq!(email_object.sender.to_string(), "test@example.com");

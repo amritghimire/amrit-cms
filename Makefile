@@ -25,11 +25,11 @@ watch: build_frontend
 
 .PHONY: watch_backend
 watch_backend:
-	cargo watch -x 'run -p api_server'
+	cargo watch -x 'run -p api_server' -w backend
 
 .PHONY: watch_frontend
 watch_frontend:
-	cd frontend && cargo watch -- trunk build --filehash false
+	cd frontend && trunk watch --filehash false --no-sri
 
 .PHONY: coverage
 coverage:

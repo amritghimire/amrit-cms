@@ -5,13 +5,33 @@ use email_clients::clients::{get_email_client, EmailClient};
 use email_clients::configuration::EmailConfiguration;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
+use std::sync::mpsc::SyncSender;
 use std::time::Duration;
+use tokio::task::JoinHandle;
+use uuid::Uuid;
+
+pub struct BackgroundTask {
+    pub name: String,
+    pub handle: JoinHandle<()>,
+    pub identifier: Uuid,
+}
+
+impl BackgroundTask {
+    pub fn new(name: impl AsRef<str>, handle: JoinHandle<()>) -> Self {
+        Self {
+            name: name.as_ref().to_string(),
+            handle,
+            identifier: Uuid::new_v4(),
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct AppState {
     pub settings: Settings,
     pub connection: PgPool,
     pub email_client: EmailClient,
+    pub tasks: Option<SyncSender<BackgroundTask>>,
 }
 
 impl AppState {
@@ -32,6 +52,7 @@ impl AppState {
             settings,
             connection,
             email_client,
+            tasks: None,
         }
     }
 
@@ -48,6 +69,7 @@ impl AppState {
             settings,
             connection,
             email_client,
+            tasks: None,
         }
     }
 
@@ -66,6 +88,7 @@ impl AppState {
             settings,
             connection,
             email_client,
+            tasks: None,
         }
     }
 
@@ -76,6 +99,7 @@ impl AppState {
             settings,
             connection,
             email_client,
+            tasks: None,
         }
     }
 }

@@ -11,6 +11,7 @@ use fake::faker::name::en::Name;
 use fake::{Dummy, Fake, Faker};
 use serde::Serialize;
 use serde_json::{json, Value};
+use std::time::Duration;
 use tower::util::ServiceExt;
 
 use auth_service::extractors::confirmation::ConfirmationActionType;
@@ -109,13 +110,17 @@ async fn registration_valid_form_data_is_inserted(pool: PgPool) {
 
 #[sqlx::test]
 async fn registration_sends_confirmation_email(pool: PgPool) {
-    let (rx, settings, app) = common::setup_app(pool);
+    let (email_rx, task_rx, settings, app) = common::setup_app_with_task_thread(pool);
+
     let (payload, data) = registration_payload();
 
     send_request(&app, &data).await;
 
-    let email_object = rx
-        .try_recv()
+    let task = task_rx.try_recv().expect("Task not thrown out.");
+    task.handle.await.expect("Join error, task panicked");
+
+    let email_object = email_rx
+        .recv_timeout(Duration::from_secs(5))
         .expect("Email not sent during the subscription");
     assert_eq!(email_object.sender.to_string(), "test@example.com");
     assert_eq!(email_object.to[0].email, payload.email);

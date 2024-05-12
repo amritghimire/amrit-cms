@@ -10,3 +10,8 @@ pub async fn confirm_token(token: &str) -> Result<ConfirmResponse> {
     let data = json!({});
     post_request(&format!("/auth/confirm/{}", token), &data).await
 }
+
+pub async fn resend_verification() -> Result<ConfirmResponse> {
+    let data = json!({});
+    post_request("/auth/resend-verification", &data).await
+}

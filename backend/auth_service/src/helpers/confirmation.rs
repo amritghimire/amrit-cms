@@ -1,12 +1,15 @@
 use crate::errors::auth::UserRegistrationError;
 use crate::errors::confirm::ConfirmUserError;
 use crate::errors::user::UserError;
-use crate::extractors::confirmation::Confirmation;
+use crate::extractors::confirmation::{Confirmation, ConfirmationActionType};
 use crate::extractors::user::User;
 use email_clients::email::{EmailAddress, EmailObject};
 use secrecy::Secret;
+use sha2::{Digest, Sha256};
 use sqlx::PgConnection;
-use utils::state::AppState;
+use tokio::task;
+use utils::errors::ErrorPayload;
+use utils::state::{AppState, BackgroundTask};
 use uuid::Uuid;
 
 #[tracing::instrument(name = "Send verification link", skip(state, user))]
@@ -27,14 +30,21 @@ pub async fn send_verification_link(
             name: user.name.clone(),
             email: user.email.clone(),
         }],
-        subject: "Please verify your account to proceed".to_string(),
+        subject: confirmation.subject(),
         plain: email_content.0,
         html: email_content.1,
     };
-    client
-        .send_emails(email_object)
-        .await
-        .map_err(UserError::ConfirmationEmailError)?;
+    let handle = task::spawn(async move {
+        client
+            .send_emails(email_object)
+            .await
+            .map_err(UserError::ConfirmationEmailError)
+            .expect("Unable to send confirmation email");
+    });
+    if let Some(tx) = &state.tasks {
+        let _ = tx.send(BackgroundTask::new("send_confirmation_email", handle));
+    }
+
     Ok(())
 }
 
@@ -110,9 +120,39 @@ pub async fn mark_user_as_confirmed(
     .execute(&mut *transaction)
     .await
     .map_err(ConfirmUserError::ConfirmationDatabaseError)?;
-    sqlx::query!("delete from confirmations where user_id = $1;", user_id)
-        .execute(&mut *transaction)
-        .await
-        .map_err(ConfirmUserError::ConfirmationDatabaseError)?;
+    sqlx::query!(
+        "delete from confirmations where user_id = $1 and action_type = $2;",
+        user_id,
+        String::from(ConfirmationActionType::UserVerification)
+    )
+    .execute(&mut *transaction)
+    .await
+    .map_err(ConfirmUserError::ConfirmationDatabaseError)?;
     Ok(())
+}
+
+pub async fn check_confirmation(
+    token: String,
+    transaction: &mut PgConnection,
+) -> Result<Confirmation, ErrorPayload> {
+    let (confirmation_id, verifier) = token
+        .split_once('.')
+        .ok_or(ConfirmUserError::InvalidToken("incomplete token".into()))?;
+    if confirmation_id.is_empty() || verifier.is_empty() {
+        Err(ConfirmUserError::InvalidToken("empty token part".into()))?;
+    }
+    let confirmation = get_confirmation(transaction, confirmation_id).await?;
+    if confirmation.is_expired() {
+        delete_confirmation(transaction, confirmation_id).await?;
+        Err(ConfirmUserError::InvalidToken("expired token".into()))?;
+    }
+
+    let mut hasher = Sha256::new();
+    hasher.update(verifier.as_bytes());
+    // Read hash digest and consume hasher
+    let verifier_hash = format!("{:x}", hasher.finalize());
+    if verifier_hash.ne(&confirmation.verifier_hash) {
+        Err(ConfirmUserError::InvalidToken("invalid hash".into()))?;
+    }
+    Ok(confirmation)
 }

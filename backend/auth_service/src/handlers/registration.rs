@@ -10,7 +10,7 @@ use axum::extract::State;
 use axum::http::header::AUTHORIZATION;
 use axum::http::HeaderValue;
 use axum::response::IntoResponse;
-use axum::{debug_handler, Json};
+use axum::Json;
 use axum_extra::extract::cookie::Cookie;
 use axum_extra::extract::SignedCookieJar;
 use serde_json::json;
@@ -18,7 +18,6 @@ use utils::errors::ErrorPayload;
 use utils::state::AppState;
 use utils::validation::ValidatedForm;
 
-#[debug_handler]
 #[tracing::instrument(name = "Starting a registration",
 skip(state, payload), fields(
 name = % payload.name,

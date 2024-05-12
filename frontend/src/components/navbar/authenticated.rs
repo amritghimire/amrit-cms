@@ -9,14 +9,15 @@ pub fn AuthenticatedNavbar() -> Element {
 
     let onclick = move |_| async move {
         let response = logout().await;
-        if response.is_ok() {
-            app_context.write().user = None;
-
-            utils::redirect_to_login();
+        match response {
+            Ok(_) => {
+                app_context.write().user = None;
+                utils::redirect_to_login();
+            }
+            Err(e) => {
+                utils::handle_application_error(&mut app_context, e);
+            }
         }
-        // if let Err(ApplicationError::BadRequestError(_)) = response {
-        //     // Couldn't logout. Add toast support here.
-        // }
     };
 
     rsx! {

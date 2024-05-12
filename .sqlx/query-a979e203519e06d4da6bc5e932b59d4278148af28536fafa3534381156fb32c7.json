@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from confirmations where user_id = $1 and action_type = $2;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a979e203519e06d4da6bc5e932b59d4278148af28536fafa3534381156fb32c7"
+}

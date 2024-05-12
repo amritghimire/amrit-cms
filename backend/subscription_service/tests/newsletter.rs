@@ -15,15 +15,19 @@ use utils::test;
 
 #[sqlx::test]
 async fn newsletter_are_not_delivered_to_unconfirmed_subscriber(pool: PgPool) {
-    let (tx, rx) = mpsc::sync_channel(5);
-    let state = test::test_state_for_email(pool, tx);
+    let (email_tx, email_rx) = mpsc::sync_channel(5);
+    let (task_tx, task_rx) = mpsc::sync_channel(5);
+
+    let mut state = test::test_state_for_email(pool, email_tx);
+    state.tasks = Some(task_tx);
+
     let app = create_router().with_state(state);
 
-    get_confirmation_link(&rx, &app).await; // Create unconfirmed user
-    create_confirmed_subscriber(&rx, &app).await;
+    get_confirmation_link(&email_rx, &app, Some(&task_rx)).await; // Create unconfirmed user
+    create_confirmed_subscriber(&email_rx, &app, Some(&task_rx)).await;
 
     // Assert no email is sent so far
-    assert_err!(rx.try_recv());
+    assert_err!(email_rx.try_recv());
     let newsletter_request_body = json!({
         "title": "Newsletter title",
         "content": {"plain": "Newsletter body as plain text", "html": "Newsletter body as html text"}
@@ -39,8 +43,7 @@ async fn newsletter_are_not_delivered_to_unconfirmed_subscriber(pool: PgPool) {
         .await
         .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
-
-    assert_eq!(rx.try_iter().count(), 1); // Assert only one email is sent.
+    assert_eq!(email_rx.try_iter().count(), 1); // Assert only one email is sent.
 }
 
 #[sqlx::test]

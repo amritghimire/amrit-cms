@@ -114,3 +114,20 @@ pub async fn delete_session(
     .map_err(UserError::SessionError)?;
     Ok(())
 }
+
+#[tracing::instrument(name = "Clearing session for id", skip(transaction))]
+pub async fn clear_sessions(
+    transaction: &mut PgConnection,
+    identifier: i32,
+) -> Result<(), UserError> {
+    sqlx::query!(
+        r#"
+        DELETE FROM sessions where user_id = $1
+        "#,
+        identifier
+    )
+    .execute(&mut *transaction)
+    .await
+    .map_err(UserError::SessionError)?;
+    Ok(())
+}

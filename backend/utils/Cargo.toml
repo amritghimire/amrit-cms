@@ -24,7 +24,7 @@ tracing.workspace = true
 http-body-util.workspace = true
 axum-extra.workspace = true
 email-clients.workspace = true
-
+uuid.workspace = true
 
 
 [build-dependencies]

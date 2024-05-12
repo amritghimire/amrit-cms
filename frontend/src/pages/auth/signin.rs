@@ -1,3 +1,4 @@
+use crate::components::button::Button;
 use crate::errors::{ApplicationError, ErrorPayload};
 use crate::routes::Route;
 use crate::utils::api::sign_in::signin;
@@ -6,24 +7,35 @@ use dioxus::prelude::*;
 use crate::components::error_line::OverallErrorLine;
 use crate::components::input::InputField;
 use crate::entities::input::UserInput;
+use crate::state::AppState;
 use crate::utils;
 
 #[component]
 pub fn SignInPage() -> Element {
     let mut error_message: Signal<Option<ErrorPayload>> = use_signal(|| None);
+    let mut in_progress = use_signal(|| false);
     let mut user_input = use_signal(UserInput::new);
+    let mut app_context = consume_context::<Signal<AppState>>();
 
     let onsubmit = move |_: FormEvent| async move {
         error_message.set(None);
+        in_progress.set(true);
         let entry = user_input.read();
 
         let response = signin(entry.get("username"), entry.get("password")).await;
-        if response.is_ok() {
-            utils::navigate_back_or_home();
+
+        match response {
+            Ok(_) => {
+                utils::navigate_back_or_home();
+            }
+            Err(ApplicationError::BadRequestError(payload)) => {
+                error_message.set(Some(payload));
+            }
+            Err(e) => {
+                utils::handle_application_error(&mut app_context, e);
+            }
         }
-        if let Err(ApplicationError::BadRequestError(payload)) = response {
-            error_message.set(Some(payload));
-        }
+        in_progress.set(false);
     };
 
     rsx! {
@@ -89,9 +101,10 @@ pub fn SignInPage() -> Element {
                     }
                 }
                 div {
-                    button {
+                    Button {
+                        progress: *in_progress.read(),
                         r#type: "submit",
-                        class: "flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
+                        class: "flex w-full justify-center rounded-md bg-indigo-600 disabled:bg-neutral-600  h-10 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mr-3 ",
                         "Sign in"
                     }
                 }

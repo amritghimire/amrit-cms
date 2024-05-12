@@ -1,8 +1,9 @@
 use crate::errors::auth::{
     EmailCheckError, FetchUserError, UserRegistrationError, UsernameCheckError,
 };
+use crate::errors::user::UserError;
 use crate::extractors::user::User;
-use secrecy::ExposeSecret;
+use secrecy::{ExposeSecret, Secret};
 use sqlx::PgConnection;
 
 #[tracing::instrument(name = "Checking for existing username")]
@@ -24,21 +25,21 @@ pub async fn fetch_by_username(
 }
 
 #[tracing::instrument(name = "Checking for existing email")]
-pub async fn is_email_used(
+pub async fn fetch_by_email(
     transaction: &mut PgConnection,
     email: &str,
-) -> Result<bool, EmailCheckError> {
-    sqlx::query!(
+) -> Result<Option<User>, EmailCheckError> {
+    let user = sqlx::query_as!(
+        User,
         r#"
-        SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)
+        select * from users where email = $1
         "#,
-        email
+        email.to_lowercase()
     )
-    .fetch_one(transaction)
+    .fetch_optional(transaction)
     .await
-    .map_err(EmailCheckError::EmailCheck)?
-    .exists
-    .ok_or(EmailCheckError::Unexpected)
+    .map_err(EmailCheckError::EmailCheck)?;
+    Ok(user)
 }
 
 #[tracing::instrument(name = "Inserting subscriber to database", skip(transaction, user))]
@@ -54,7 +55,7 @@ pub async fn insert_user(
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id;
         "#,
         user.name,
-        user.email,
+        user.email.to_lowercase(),
         user.username,
         user.normalized_username,
         password_hash.expose_secret(),
@@ -83,4 +84,22 @@ pub async fn fetch_user(
     .map_err(FetchUserError::UserFetch)?;
 
     Ok(user)
+}
+
+pub async fn update_password(
+    transaction: &mut PgConnection,
+    user_id: i32,
+    password: Secret<String>,
+) -> Result<u64, UserError> {
+    let password_hash = User::hash_password(password.expose_secret())?;
+    let result = sqlx::query!(
+        "UPDATE users SET password_hash = $1 WHERE id = $2",
+        password_hash.to_string(),
+        user_id
+    )
+    .execute(transaction)
+    .await
+    .map_err(UserError::SessionError)?;
+
+    Ok(result.rows_affected())
 }
