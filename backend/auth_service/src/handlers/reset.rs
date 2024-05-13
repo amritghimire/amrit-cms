@@ -4,7 +4,9 @@ use crate::errors::user::UserError;
 use crate::extractors::confirmation::{Confirmation, ConfirmationActionType};
 use crate::extractors::session::SESSION_TOKEN_COOKIE;
 use crate::extractors::user::User;
-use crate::helpers::confirmation::{add_confirmation, send_verification_link};
+use crate::helpers::confirmation::{
+    add_confirmation, clear_confirmation_action_type, send_verification_link,
+};
 use crate::helpers::user::{fetch_by_email, fetch_by_username, fetch_user, update_password};
 use axum::extract::{Path, State};
 use axum::http::header::AUTHORIZATION;
@@ -132,6 +134,12 @@ pub async fn reset_password(
             Err(UserError::UnexpectedError)?;
         }
         clear_sessions(&mut transaction, user.id).await?;
+        clear_confirmation_action_type(
+            &mut transaction,
+            user.id,
+            ConfirmationActionType::PasswordReset,
+        )
+        .await?;
         let session_token = create_new_session(&mut transaction, user.id, json!({})).await?;
         transaction
             .commit()

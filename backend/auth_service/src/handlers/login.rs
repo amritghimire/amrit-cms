@@ -14,6 +14,8 @@ use serde::Deserialize;
 use serde_json::json;
 use validator::Validate;
 
+use crate::extractors::confirmation::ConfirmationActionType;
+use crate::helpers::confirmation::clear_confirmation_action_type;
 use utils::errors::ErrorPayload;
 use utils::state::AppState;
 use utils::validation::ValidatedForm;
@@ -29,9 +31,9 @@ pub struct LoginForm {
     pub password: String,
 }
 
-#[tracing::instrument(name="Starting a login",
+#[tracing::instrument(name = "Starting a login",
 skip(state, payload), fields(
-username= %payload.username,
+username = % payload.username,
 )
 )]
 pub async fn login(
@@ -52,6 +54,13 @@ pub async fn login(
         let session_token = create_new_session(&mut transaction, user.id, json!({}))
             .await
             .map_err(UserLoginError::UnexpectedUserError)?;
+
+        clear_confirmation_action_type(
+            &mut transaction,
+            user.id,
+            ConfirmationActionType::PasswordReset,
+        )
+        .await?;
 
         transaction
             .commit()

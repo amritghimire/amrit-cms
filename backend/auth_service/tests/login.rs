@@ -1,4 +1,6 @@
+use auth_service::extractors::confirmation::ConfirmationActionType;
 use auth_service::extractors::session::SESSION_TOKEN_COOKIE;
+use auth_service::helpers::user::fetch_user;
 use auth_service::router::create_router;
 use axum::http::header::{AUTHORIZATION, SET_COOKIE};
 use axum::http::StatusCode;
@@ -38,6 +40,32 @@ async fn login_successful(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
     assert!(!authorization_header.is_empty());
     assert!(cookie_header.contains(SESSION_TOKEN_COOKIE))
+}
+
+#[sqlx::test]
+async fn login_clears_resets_token(pool: PgPool) {
+    let mut conn = pool.acquire().await.expect("Unable to acquire connection");
+
+    let state = AppState::test_state(pool, None);
+    let app = create_router().with_state(state);
+    let (confirmation, _) =
+        common::confirmation_fixture(&mut conn, ConfirmationActionType::PasswordReset).await;
+    let user = fetch_user(&mut conn, confirmation.user_id)
+        .await
+        .expect("Unable to fetch user");
+
+    send_request(&app, &user.username, common::STRONG_PASSWORD).await;
+
+    let resets = sqlx::query!(
+        r#"SELECT COUNT(*) as count FROM confirmations WHERE user_id = $1 AND action_type = $2"#,
+        confirmation.user_id,
+        String::from(ConfirmationActionType::PasswordReset)
+    )
+    .fetch_one(&mut *conn)
+    .await
+    .expect("Unable to fetch sessions");
+
+    assert_eq!(resets.count, Some(0));
 }
 
 #[sqlx::test]

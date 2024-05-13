@@ -81,8 +81,8 @@ pub fn SignInPage() -> Element {
                             "Password"
                         }
                         div { class: "text-sm",
-                            a {
-                                href: "#",
+                            Link {
+                                to: Route::InitiateResetPasswordPage {},
                                 class: "font-semibold text-indigo-600 hover:text-indigo-500",
                                 "Forgot password?"
                             }

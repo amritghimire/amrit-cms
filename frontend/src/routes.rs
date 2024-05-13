@@ -1,8 +1,8 @@
 use dioxus::prelude::*;
 
 use crate::pages::{
-    AuthenticatedLayout, ConfirmationPage, Home, PageNotFound, SignInPage, SignUpPage,
-    VerifiedLayout,
+    AuthenticatedLayout, ConfirmationPage, Home, InitiateResetPasswordPage, PageNotFound,
+    ProcessResetLinkPage, SignInPage, SignUpPage, VerifiedLayout,
 };
 
 #[derive(Clone, Routable, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -20,6 +20,10 @@ pub enum Route {
     // Out of authentication boundary
     #[route("/auth/login")]
     SignInPage {},
+    #[route("/auth/reset")]
+    InitiateResetPasswordPage {},
+    #[route("/auth/reset-password/:token")]
+    ProcessResetLinkPage { token: String },
     #[route("/auth/signup")]
     SignUpPage {},
     #[route("/:..route")]

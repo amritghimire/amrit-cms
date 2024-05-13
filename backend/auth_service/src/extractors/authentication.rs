@@ -16,16 +16,19 @@ use uuid::Uuid;
 use utils::errors::ErrorPayload;
 use utils::state::AppState;
 
+// Simple login.
 pub struct LoggedInUser {
     pub session: Uuid,
     pub user: User,
 }
 
+// This checks for verification as well.
 pub struct AuthenticatedUser {
     pub session: Uuid,
     pub user: User,
 }
 
+// This checks for header only.
 pub struct AuthenticationHeaderUser {
     pub session: Uuid,
     pub user: User,

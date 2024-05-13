@@ -37,6 +37,34 @@ async fn reset_password_valid_token_200_response(pool: PgPool) {
 }
 
 #[sqlx::test]
+async fn reset_password_valid_token_clears_resets(pool: PgPool) {
+    let mut conn = pool.acquire().await.expect("Unable to acquire connection");
+
+    let (_, _, app) = common::setup_app(pool);
+
+    let (confirmation, token) =
+        common::confirmation_fixture(&mut conn, ConfirmationActionType::PasswordReset).await;
+
+    let request_data = json!({
+        "password": NEW_PASSWORD,
+        "confirm_password": NEW_PASSWORD
+    });
+
+    send_request(&app, &token, request_data).await;
+
+    let resets = sqlx::query!(
+        r#"SELECT COUNT(*) as count FROM confirmations WHERE user_id = $1 AND action_type = $2"#,
+        confirmation.user_id,
+        String::from(ConfirmationActionType::PasswordReset)
+    )
+    .fetch_one(&mut *conn)
+    .await
+    .expect("Unable to fetch sessions");
+
+    assert_eq!(resets.count, Some(0));
+}
+
+#[sqlx::test]
 async fn reset_password_valid_token_old_session_cleared(pool: PgPool) {
     let mut conn = pool.acquire().await.expect("Unable to acquire connection");
 

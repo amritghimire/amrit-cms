@@ -108,6 +108,25 @@ pub async fn delete_confirmation(
     Ok(())
 }
 
+#[tracing::instrument(name = "Clearing reset confirmations", skip(transaction))]
+pub async fn clear_confirmation_action_type(
+    transaction: &mut PgConnection,
+    user_id: i32,
+    action_type: ConfirmationActionType,
+) -> Result<(), ConfirmUserError> {
+    sqlx::query!(
+        r#"
+        DELETE FROM confirmations where user_id = $1 and action_type = $2
+        "#,
+        user_id,
+        String::from(action_type)
+    )
+    .execute(&mut *transaction)
+    .await
+    .map_err(ConfirmUserError::ConfirmationDatabaseError)?;
+    Ok(())
+}
+
 #[tracing::instrument(name = "Marking user as confirmed.", skip(transaction))]
 pub async fn mark_user_as_confirmed(
     transaction: &mut PgConnection,
